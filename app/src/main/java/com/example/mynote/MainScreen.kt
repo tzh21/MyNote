@@ -14,7 +14,7 @@ fun MainScreen() {
             LoginScreen(
                 navController = navController,
                 onLoginTriggered = {
-                    navController.navigate("note/1")
+                    navController.navigate("home")
                 }
             )
         }
@@ -24,9 +24,9 @@ fun MainScreen() {
         composable("home") {
             HomeScreen(navController = navController)
         }
-        composable("note/{id}") {backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id")
-            EditScreen(navController = navController, noteID = id ?: "none")
-        }
+//        composable("note/{id}") {backStackEntry ->
+//            val id = backStackEntry.arguments?.getString("id")
+//            EditorScreen(navController = navController, noteID = id ?: "none")
+//        }
     }
 }
