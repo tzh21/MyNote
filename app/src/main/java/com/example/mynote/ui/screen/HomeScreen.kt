@@ -1,18 +1,19 @@
 // 主页。注意：主页不是分组（文件夹）页面
 
-// TODO
-// 新建笔记按钮
-
-package com.example.mynote
+package com.example.mynote.ui.screen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
+import androidx.compose.ui.Modifier
+
+const val HomeRoute = "home"
 
 @Composable
 fun HomeScreen(
-    navController: NavController
+    navigateToCategory: () -> Unit,
+    navigateToEditorScreen: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column {
         Text("Home Screen")

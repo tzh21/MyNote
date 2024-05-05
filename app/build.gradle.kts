@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.10"
 }
 
 android {
@@ -50,7 +51,21 @@ android {
 }
 
 dependencies {
+//    Glide
+    implementation ("com.github.bumptech.glide:glide:4.14.2")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
 
+//    Gson
+    implementation ("com.google.code.gson:gson:2.8.8")
+
+//    Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+
+//    Kotlin serialization Converter
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
