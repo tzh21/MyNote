@@ -1,10 +1,8 @@
-package com.example.mynote
+package com.example.mynote.ui.screen
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.provider.MediaStore
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Row
@@ -35,6 +33,9 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileOutputStream
 
+const val EditorArg = "noteId"
+const val EditorRoute = "note/$EditorArg"
+
 enum class BlockType {
     BODY,
     IMAGE
@@ -49,7 +50,9 @@ data class BlockData(
 )
 
 @Composable
-fun EditorScreen() {
+fun EditorScreen(
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
 
 //    hello world 用来测试 LazyColumn 是否 work，暂时不要删
@@ -69,7 +72,7 @@ fun EditorScreen() {
         blockDataList[index].value = BlockData(t, newData)
     }
 
-    //    将 blockDataList 保存到本地 json 文件中
+//    将 blockDataList 保存到本地 json 文件中
 //    目录暂时为 test_dir，后续会根据笔记的分类调整
 //    文件名暂时为 test_file.json，后续会根据笔记的标题、创建时间调整
     fun saveBlockDataList(prefix: String, fileName: String) {
@@ -207,8 +210,8 @@ fun EditorScreenPreview() {
 }
 
 // 后续考虑使用的富文本编辑器，暂时不用删
-@Composable
-fun RichEditor() {
+//@Composable
+//fun RichEditor() {
 //    val basicRichTextState = rememberRichTextState()
 //    var isChecked by remember { mutableStateOf(false) }
 //    var markdownString by remember { mutableStateOf("") }
@@ -243,4 +246,4 @@ fun RichEditor() {
 //            modifier = Modifier.fillMaxWidth()
 //        )
 //    }
-}
+//}
