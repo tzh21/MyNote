@@ -18,10 +18,9 @@ const val LoginRoute = "login"
 
 @Composable
 fun LoginScreen(
-    navigateToHome: () -> Unit,
+    navigateToHome: (String) -> Unit,
     navigateToSignup: () -> Unit,
     viewModel: LoginViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    modifier: Modifier = Modifier,
 ) {
     val uiState = viewModel.uiState.collectAsState()
 
@@ -60,10 +59,11 @@ fun LoginScreen(
         when (uiState.value.status) {
             LoginStatus.SUCCESS -> {
                 Text("登录成功")
-                navigateToHome()
+                navigateToHome(uiState.value.email)
             }
             LoginStatus.ERROR -> {
                 Text("登录失败")
+                Text(uiState.value.errorDetail)
             }
             LoginStatus.LOADING -> {
                 Text("登录中...")

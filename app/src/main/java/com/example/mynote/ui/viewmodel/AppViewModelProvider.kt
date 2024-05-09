@@ -20,6 +20,18 @@ object AppViewModelProvider {
                 myNoteApplication().container.userRepository
             )
         }
+
+        initializer {
+            HomeViewModel()
+        }
+
+        initializer {
+            EditorViewModel()
+        }
+
+        initializer {
+            CategoryViewModel()
+        }
     }
 }
 

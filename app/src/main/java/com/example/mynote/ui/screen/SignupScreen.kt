@@ -17,9 +17,8 @@ const val SignupRoute = "signup"
 
 @Composable
 fun SignupScreen(
-    navigateToHome: () -> Unit,
+    navigateToHome: (String) -> Unit,
     viewModel: SignupViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    modifier: Modifier = Modifier,
 ) {
     val uiState = viewModel.uiState.collectAsState()
 
@@ -28,7 +27,7 @@ fun SignupScreen(
     ) {
 //            账号输入框
         TextField(
-            value = uiState.value.email,
+            value = uiState.value.username,
             onValueChange = { viewModel.onEmailChange(it) },
             label = { Text("账号") },
         )
@@ -38,7 +37,6 @@ fun SignupScreen(
             value = uiState.value.password,
             onValueChange = { viewModel.onPasswordChange(it) },
             label = { Text("密码") },
-//                visualTransformation = PasswordVisualTransformation(),
         )
 
 //            注册按钮
@@ -51,7 +49,7 @@ fun SignupScreen(
         when (uiState.value.status) {
             SignupStatus.SUCCESS -> {
                 Text("注册成功")
-                navigateToHome()
+                navigateToHome(uiState.value.username)
             }
             SignupStatus.ERROR -> {
                 Text("注册失败")
