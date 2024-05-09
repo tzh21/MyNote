@@ -17,7 +17,7 @@ enum class SignupStatus {
 }
 
 data class SignupState(
-    val email: String,
+    val username: String,
     val password: String,
     val status: SignupStatus = SignupStatus.INACTIVE,
 )
@@ -30,7 +30,7 @@ class SignupViewModel(
 
     fun onEmailChange(email: String) {
         _uiState.update {
-            it.copy(email = email)
+            it.copy(username = email)
         }
     }
 
@@ -46,7 +46,7 @@ class SignupViewModel(
                 it.copy(status = SignupStatus.LOADING)
             }
             try {
-                userRepository.signup(_uiState.value.email, _uiState.value.password)
+                userRepository.signup(_uiState.value.username, _uiState.value.password)
                 _uiState.update {
                     it.copy(status = SignupStatus.SUCCESS)
                 }

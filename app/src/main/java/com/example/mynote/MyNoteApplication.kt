@@ -4,6 +4,7 @@
 package com.example.mynote
 
 import android.app.Application
+import androidx.media3.exoplayer.ExoPlayer
 import com.example.mynote.data.AppContainer
 import com.example.mynote.data.AppDataContainer
 

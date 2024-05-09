@@ -4,6 +4,7 @@
 package com.example.mynote.network
 
 import kotlinx.serialization.Serializable
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -25,9 +26,14 @@ data class LoginResponse(
     val message: String
 )
 
+@Serializable
+data class ErrorResponse(
+    val error: String
+)
+
 interface UserApiService {
     @POST("login")
-    suspend fun login(@Body loginRequest: LoginRequest): LoginResponse
+    suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
     @POST("signup")
     suspend fun signup(@Body user: User): LoginResponse
 }
