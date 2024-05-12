@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.LocalFileApi
 import com.example.mynote.data.getCurrentTime
-import com.example.mynote.ui.component.FileList
 import com.example.mynote.ui.component.MyNoteTopBar
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
@@ -42,11 +41,11 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
 
-    viewModel.setUserName(username)
-    viewModel.setCategory(category)
+    viewModel.username.value = username
+    viewModel.category.value = category
     viewModel.setFiles(context)
 
-    val files = viewModel.files
+    val files = viewModel.fileNames
 
     Scaffold(
         topBar = { MyNoteTopBar(
