@@ -4,16 +4,12 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.google.gson.Gson
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.concurrent.thread
 
 enum class BlockType {
     BODY,
@@ -33,7 +29,7 @@ data class Note(
 
 //本地文件相关操作
 object LocalFileApi {
-    fun createNote(
+    fun createNoteFile(
         prefix: String, fileName: String,
         context: Context,
     ) {
@@ -43,7 +39,7 @@ object LocalFileApi {
         }
 
         val note = Note(
-            title = "未命名",
+            title = "",
             body = mutableStateListOf<Block>(
                 Block(BlockType.BODY, "")
             )

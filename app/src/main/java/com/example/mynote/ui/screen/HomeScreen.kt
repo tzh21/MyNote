@@ -13,6 +13,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,6 +24,7 @@ import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.component.MyNoteTopBar
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
+import kotlinx.coroutines.launch
 
 data object HomeRoute {
     const val base = "home"
@@ -40,12 +44,17 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
+//    设置用户名和分类
     viewModel.username.value = username
     viewModel.category.value = category
-    viewModel.setFiles(context)
+//    viewModel.setFiles(context)
 
-    val files = viewModel.fileNames
+//    从数据库中加载笔记列表
+    val noteListState by viewModel.noteListUiState.collectAsState()
+
+//    val files = viewModel.fileNames
 
     Scaffold(
         topBar = { MyNoteTopBar(
@@ -55,9 +64,14 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = {
 //                这里采用创建时间作为文件名（这种设计要求两次创建间隔超过 1s）
-                val currentTime = getCurrentTime()
-                LocalFileApi.createNote("$username/$category", currentTime, context)
-                navigateToEditorScreen(currentTime)
+                coroutineScope.launch {
+                    val currentTime = getCurrentTime()
+                    viewModel.createNote(
+                        currentTime,
+                        context
+                    )
+                    navigateToEditorScreen(currentTime)
+                }
             }) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -91,13 +105,22 @@ fun HomeScreen(
             }
 
             LazyColumn {
-                items(files.size) { index ->
+//                items(files.size) { index ->
+//                    Card(
+//                        modifier = Modifier.clickable {
+//                            navigateToEditorScreen(files[index])
+//                        }
+//                    ) {
+//                        Text(files[index])
+//                    }
+//                }
+                items(noteListState.noteList.size) { index ->
                     Card(
                         modifier = Modifier.clickable {
-                            navigateToEditorScreen(files[index])
+                            navigateToEditorScreen(noteListState.noteList[index].fileName)
                         }
                     ) {
-                        Text(files[index])
+                        Text(noteListState.noteList[index].fileName)
                     }
                 }
             }

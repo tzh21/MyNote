@@ -102,7 +102,11 @@ fun EditorScreen(
                 .focusTarget()
         ) {
             item {
-                TextField(value = viewModel.noteTitle.value, onValueChange = { newTitle -> viewModel.setNoteTitle(newTitle) })
+                TextField(
+                    value = viewModel.noteTitle.value,
+                    onValueChange = { newTitle -> viewModel.setNoteTitle(newTitle) },
+                    placeholder = { Text("标题") }
+                )
             }
 
             item {
