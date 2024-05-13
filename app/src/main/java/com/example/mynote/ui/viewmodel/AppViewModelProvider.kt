@@ -22,11 +22,15 @@ object AppViewModelProvider {
         }
 
         initializer {
-            HomeViewModel()
+            HomeViewModel(
+                myNoteApplication().container.noteDao
+            )
         }
 
         initializer {
-            EditorViewModel()
+            EditorViewModel(
+                myNoteApplication().container.noteDao
+            )
         }
 
         initializer {

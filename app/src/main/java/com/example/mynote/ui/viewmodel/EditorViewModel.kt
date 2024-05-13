@@ -1,17 +1,26 @@
 package com.example.mynote.ui.viewmodel
 
 import android.content.Context
-import android.net.Uri
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.media3.common.MediaItem
+import androidx.lifecycle.viewModelScope
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.mynote.data.Block
 import com.example.mynote.data.LocalFileApi
 import com.example.mynote.data.Note
+import com.example.mynote.data.NoteDao
+import com.example.mynote.data.NoteEntity
+import com.example.mynote.data.getCurrentTime
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
-class EditorViewModel: ViewModel() {
+class EditorViewModel(
+    val noteDao: NoteDao
+): ViewModel() {
     lateinit var player: ExoPlayer
 
     fun initExoPlayer(context: Context) {
@@ -19,47 +28,30 @@ class EditorViewModel: ViewModel() {
     }
 
     var username = mutableStateOf("null")
-        private set
-
-    fun setUserName(name: String) {
-        username.value = name
-    }
-
     var fileName = mutableStateOf("null")
-        private set
-
-    fun setFileName(value: String) {
-        fileName.value = value
-    }
-
     var category = mutableStateOf("null")
-        private set
 
-    fun setCategory(value: String) {
-        category.value = value
-    }
-
-    var note = Note(
+    private var note = Note(
         title = "null",
         body = listOf()
     )
-        private set
-
+    var noteEntity by mutableStateOf<NoteEntity?>(null)
     var noteTitle = mutableStateOf("null")
-        private set
-
     var noteBody = mutableStateListOf<Block>()
-        private set
 
-    fun loadNote(context: Context) {
-        note = LocalFileApi.loadNote("${username.value}/${category.value}/${fileName.value}", context)
-        noteTitle.value = note.title
-        noteBody.clear()
-        noteBody.addAll(note.body)
-    }
+//    从文件系统中加载笔记
+    fun loadNote(context: Context) { //2311
+        viewModelScope.launch {
+            note = LocalFileApi.loadNote("${username.value}/${category.value}/${fileName.value}", context)
 
-    fun setNoteTitle(value: String) {
-        noteTitle.value = value
+            noteEntity = noteDao.getNoteByName(username.value, category.value, fileName.value)
+                .filterNotNull()
+                .first()
+
+            noteTitle.value = note.title
+            noteBody.clear()
+            noteBody.addAll(note.body)
+        }
     }
 
     fun changeText(index: Int, text: String) {
@@ -74,16 +66,22 @@ class EditorViewModel: ViewModel() {
         noteBody.add(index, block)
     }
 
-    fun saveNote(context: Context) {
+    suspend fun updateNote(context: Context) {
         note = Note(
             title = noteTitle.value,
             body = noteBody
         )
+//        更新到文件系统
         LocalFileApi.saveNote("${username.value}/${category.value}", fileName.value, note, context)
+//        更新到数据库
+        noteDao.update(noteEntity!!.copy(
+            category = category.value,
+            title = noteTitle.value,
+            lastModifiedTime = getCurrentTime()
+        ))
     }
 
     var showImageOption = mutableStateOf(false)
-        private set
 
     fun setShowImageOption(value: Boolean) {
         showImageOption.value = value
