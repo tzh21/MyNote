@@ -8,17 +8,18 @@ import androidx.lifecycle.viewModelScope
 import com.example.mynote.data.LocalFileApi
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class HomeViewModel(
     val noteDao: NoteDao
 ): ViewModel() {
     var username = mutableStateOf("null")
     var category = mutableStateOf("null")
-    var fileNames = mutableStateListOf<String>()
 
     var noteListUiState: StateFlow<NoteListUiState> =
         noteDao.getAllNotes().map { NoteListUiState(it) }
@@ -27,16 +28,6 @@ class HomeViewModel(
                 started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
                 initialValue = NoteListUiState()
             )
-
-//    从数据库中加载笔记列表
-//    fun initNoteLists(context: Context) {
-//
-//    }
-
-//    fun setFiles(context: Context) {
-//        fileNames.clear()
-//        fileNames.addAll(LocalFileApi.listFiles("${username.value}/${category.value}", context))
-//    }
 
     suspend fun createNote(
         fileName: String,
@@ -57,9 +48,13 @@ class HomeViewModel(
         ))
     }
 
-    fun deleteAllFiles(context: Context) {
-        fileNames.clear()
-        LocalFileApi.deleteAllFiles("${username.value}/${category.value}", context)
+    suspend fun deleteAllFiles(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+    //        从数据库中删除所有笔记
+            noteDao.deleteAllNotes(username.value, category.value)
+    //        从文件系统中删除所有笔记
+            LocalFileApi.deleteAllFiles("${username.value}/${category.value}", context)
+        }
     }
 
     companion object {

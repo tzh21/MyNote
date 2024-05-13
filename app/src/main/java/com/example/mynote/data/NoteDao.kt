@@ -13,6 +13,12 @@ interface NoteDao {
     @Query("SELECT * FROM notes ORDER BY lastModifiedTime DESC")
     fun getAllNotes(): Flow<List<NoteEntity>>
 
+    @Query("SELECT * FROM notes WHERE username = :username AND category = :category AND fileName = :fileName")
+    fun getNoteByName(username: String, category: String, fileName: String): Flow<NoteEntity>
+
+    @Query("DELETE FROM notes WHERE username = :username AND category = :category")
+    suspend fun deleteAllNotes(username: String, category: String)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(note: NoteEntity)
 

@@ -28,7 +28,9 @@ object AppViewModelProvider {
         }
 
         initializer {
-            EditorViewModel()
+            EditorViewModel(
+                myNoteApplication().container.noteDao
+            )
         }
 
         initializer {

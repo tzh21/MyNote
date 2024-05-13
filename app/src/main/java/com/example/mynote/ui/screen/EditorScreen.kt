@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -35,10 +36,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -53,6 +51,7 @@ import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.component.MyNoteTopBar
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.EditorViewModel
+import kotlinx.coroutines.launch
 import java.io.File
 
 data object EditorRoute {
@@ -76,10 +75,11 @@ fun EditorScreen(
     viewModel: EditorViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
-    viewModel.setUserName(username)
-    viewModel.setCategory(category)
-    viewModel.setFileName(fileName)
+    viewModel.username.value = username
+    viewModel.category.value = category
+    viewModel.fileName.value = fileName
     viewModel.loadNote(context)
     viewModel.initExoPlayer(context)
 
@@ -91,8 +91,10 @@ fun EditorScreen(
 //                退出时自动保存
 //                目前不支持使用系统返回动作（如滑动），只点击支持返回按钮
 //                可以将系统返回动作视为放弃更改；在展示时尽量避免执行系统返回动作。
-                viewModel.saveNote(context)
-                navigateUp()
+                coroutineScope.launch {
+                    viewModel.updateNote(context)
+                    navigateUp()
+                }
             }
         ) }
     ) {
@@ -104,7 +106,7 @@ fun EditorScreen(
             item {
                 TextField(
                     value = viewModel.noteTitle.value,
-                    onValueChange = { newTitle -> viewModel.setNoteTitle(newTitle) },
+                    onValueChange = { newTitle -> viewModel.noteTitle.value = newTitle },
                     placeholder = { Text("标题") }
                 )
             }
@@ -169,7 +171,9 @@ fun EditorScreen(
 
 //                    保存数据到 json 文件
                     Button(onClick = {
-                        viewModel.saveNote(context)
+                        coroutineScope.launch {
+                            viewModel.updateNote(context)
+                        }
                     }) {
                         Text("保存")
                     }
@@ -205,15 +209,12 @@ fun ImageBlock(
     var showOption by rememberSaveable {
         mutableStateOf(false)
     }
-
     var pressOffset by remember {
         mutableStateOf(DpOffset.Zero)
     }
-
     var itemHeight by remember {
         mutableStateOf(0.dp)
     }
-
     val density = LocalDensity.current
 
     Box {
