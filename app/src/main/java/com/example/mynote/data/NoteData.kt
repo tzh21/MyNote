@@ -5,9 +5,19 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import androidx.lifecycle.viewModelScope
+import com.example.mynote.network.ErrorResponse
+import com.example.mynote.network.MyNoteApiService
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -29,79 +39,194 @@ data class Note(
 
 //本地文件相关操作
 object LocalFileApi {
-    fun createNoteFile(
-        prefix: String, fileName: String,
-        context: Context,
-    ) {
-        val directory = File(context.filesDir, prefix)
-        if (!directory.exists()) {
-            directory.mkdirs()
+    fun createFile(
+        path: String, context: Context
+    ): File {
+        val file = File(context.filesDir, path)
+
+        if (!file.exists()) {
+            val dir = File(file.parent ?: "")
+            if (!dir.exists()) {
+                dir.mkdirs()
+            }
+            file.createNewFile()
         }
 
-        val note = Note(
-            title = "",
-            body = mutableStateListOf<Block>(
-                Block(BlockType.BODY, "")
-            )
-        )
-
-        saveNote(
-            prefix, fileName,
-            note, context
-        )
+        return file
     }
 
     fun createDir(
         path: String, context: Context
-    ) {
-        val root = context.filesDir
-        val dir = File(root, path)
+    ): File {
+        val dir = File(context.filesDir, path)
         if (!dir.exists()) {
             dir.mkdirs()
+        }
+        return dir
+    }
+
+    fun writeFile(
+        path: String, byteStream: InputStream,
+        context: Context
+    ) {
+        val file = createFile(path, context)
+        FileOutputStream(file).use { stream ->
+            byteStream.copyTo(stream)
         }
     }
 
     fun saveNote(
-        prefix: String, fileName: String,
-        note: Note, context: Context
+        path: String, note: Note, context: Context
     ) {
+        val file = createFile(path, context)
         val gson = Gson()
         val jsonString = gson.toJson(note)
 
-        val directory = File(context.filesDir, prefix)
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-        val file = File(directory, fileName)
-
-        // 创建文件并写入内容
         FileOutputStream(file).use { stream ->
             stream.write(jsonString.toByteArray())
         }
     }
-
     fun saveResource(
-        uri: Uri, prefix: String,
-        fileName: String, context: Context
+        uri: Uri, path: String, context: Context
     ) {
+        val file = createFile(path, context)
         val resolver: ContentResolver = context.contentResolver
-
-        val root = context.filesDir
-        val dir = File(root, prefix)
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-
-        val audioFile = File(dir, fileName)
-
         val inputStream = resolver.openInputStream(uri)
+
         inputStream?.use {
-            FileOutputStream(audioFile).use { outputStream ->
+            FileOutputStream(file).use { outputStream ->
                 it.copyTo(outputStream)
             }
         }
     }
 
+    //返回 path 下的所有目录名（不包括文件）
+    fun listDirs(
+        path: String,
+        context: Context,
+    ): List<String> {
+        val dirs = File(context.filesDir, path).listFiles()
+        val dirNames = dirs?.filter { it.isDirectory }?.map { it.name } ?: listOf()
+
+        return dirNames
+    }
+
+    //返回 path 下的所有文件名（不包括目录）
+    fun listFiles(
+        path: String,
+        context: Context
+    ): List<String> {
+        val files = File(context.filesDir, path).listFiles()
+        if (files.isEmpty()) {
+            return listOf("本目录为空")
+        }
+        return files?.map { it.name } ?: listOf("本目录为空")
+    }
+
+    fun deleteFile(
+        path: String,
+        context: Context
+    ) {
+        val file = File(context.filesDir, path)
+        if (file.exists()) {
+            if (file.isFile) {
+                file.delete()
+            }
+            else if (file.isDirectory) {
+                file.deleteRecursively()
+            }
+        }
+    }
+
+//    删除目录下的所有文件和文件夹
+    fun deleteAllFiles(
+        path: String,
+        context: Context
+    ) {
+        val root = context.filesDir
+        val files = File(root, path).listFiles()
+
+        if (files != null) {
+            for (file in files) {
+                if (file.isFile) {
+                    file.delete()
+                }
+                else if (file.isDirectory) {
+                    file.deleteRecursively()
+                }
+            }
+        }
+    }
+}
+
+object NoteLoaderApi {
+    //    返回 Note 格式的笔记
+    fun loadNote(
+        path: String,
+        context: Context
+    ): Note {
+        val file = File(context.filesDir, path)
+        Log.d("loadNote", path)
+        var note = Note(
+            title = "未命名",
+            body = mutableStateListOf<Block>()
+        )
+
+        if (file.exists()) {
+            val content = file.readText()
+            Log.d("loadNote", content)
+            val gson = Gson()
+            note = gson.fromJson(content, Note::class.java)
+        }
+
+        return note
+    }
+
+    //    返回笔记文件的 json 源代码
+    fun loadNoteSource(
+        path: String,
+        context: Context
+    ): String {
+        val file = File(context.filesDir, path)
+        var source = ""
+
+        if (file.exists()) {
+            source = file.readText()
+        }
+
+        return source
+    }
+}
+
+object RemoteFileApi {
+    suspend fun uploadNote(
+        path: String,
+        context: Context,
+        coroutineScope: CoroutineScope,
+        apiService: MyNoteApiService
+    ) {
+        coroutineScope.launch {
+            val file = File(context.filesDir, path)
+            val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+            val formData = MultipartBody.Part.createFormData("file", file.name, requestFile)
+            val response = apiService.upload(path, formData)
+            if (response.isSuccessful) {
+                Log.d("HomeViewModel", "Upload success")
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorDetail = if (errorBody != null) {
+                    Json.decodeFromString<ErrorResponse>(errorBody).error
+                } else {
+                    "Unknown error"
+                }
+
+                Log.d("HomeViewModel", errorDetail)
+            }
+        }
+    }
+}
+
+object LocalFileDebugApi {
     fun printFileContent(
         path: String,
         context: Context,
@@ -131,107 +256,6 @@ object LocalFileApi {
         } else {
             Log.d("printFilenames", "文件目录为空")
         }
-    }
-
-    //返回 path 下的所有目录名（不包括文件）
-    fun listDirs(
-        path: String,
-        context: Context,
-    ): List<String> {
-        val root = context.filesDir
-        val dirs = File(root, path).listFiles()
-        val dirNames = dirs?.filter { it.isDirectory }?.map { it.name } ?: listOf()
-
-        return dirNames
-    }
-
-    //返回 path 下的所有文件名（不包括目录）
-    fun listFiles(
-        path: String,
-        context: Context
-    ): List<String> {
-        val root = context.filesDir
-        val files = File(root, path).listFiles()
-        if (files.isEmpty()) {
-            return listOf("本目录为空")
-        }
-        return files?.map { it.name } ?: listOf("本目录为空")
-    }
-
-    fun deleteFile(
-        path: String,
-        context: Context
-    ) {
-        val root = context.filesDir
-        val file = File(root, path)
-        if (file.exists()) {
-            if (file.isFile) {
-                file.delete()
-            }
-            else if (file.isDirectory) {
-                file.deleteRecursively()
-            }
-        }
-        else {
-            throw Exception("$path: 文件不存在")
-        }
-    }
-
-//    删除目录下的所有文件和文件夹
-    fun deleteAllFiles(
-        path: String,
-        context: Context
-    ) {
-        val root = context.filesDir
-        val files = File(root, path).listFiles()
-
-        if (files != null) {
-            for (file in files) {
-                if (file.isFile) {
-                    file.delete()
-                }
-                else if (file.isDirectory) {
-                    file.deleteRecursively()
-                }
-            }
-        }
-    }
-
-    fun loadNote(
-        path: String,
-        context: Context
-    ): Note {
-        val root = context.filesDir
-        val file = File(root, path)
-        var note = Note(
-            title = "未命名",
-            body = mutableStateListOf<Block>()
-        )
-
-        if (file.exists()) {
-            val content = file.readText()
-            val gson = Gson()
-            note = gson.fromJson(content, Note::class.java)
-        }
-
-        return note
-    }
-
-    fun loadBlockList(
-        path: String,
-        context: Context
-    ): List<Block> {
-        val root = context.filesDir
-        val file = File(root, path)
-        var blockList = listOf<Block>()
-
-        if (file.exists()) {
-            val content = file.readText()
-            val gson = Gson()
-            blockList = gson.fromJson(content, Array<Block>::class.java).toList()
-        }
-
-        return blockList
     }
 }
 

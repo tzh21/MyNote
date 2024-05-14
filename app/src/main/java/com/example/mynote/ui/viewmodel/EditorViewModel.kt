@@ -1,6 +1,7 @@
 package com.example.mynote.ui.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -13,13 +14,22 @@ import com.example.mynote.data.LocalFileApi
 import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
+import com.example.mynote.data.NoteLoaderApi
+import com.example.mynote.data.RemoteFileApi
 import com.example.mynote.data.getCurrentTime
+import com.example.mynote.network.ErrorResponse
+import com.example.mynote.network.MyNoteApiService
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 
 class EditorViewModel(
-    val noteDao: NoteDao
+    val noteDao: NoteDao,
+    val apiService: MyNoteApiService
 ): ViewModel() {
     lateinit var player: ExoPlayer
 
@@ -39,10 +49,12 @@ class EditorViewModel(
     var noteTitle = mutableStateOf("null")
     var noteBody = mutableStateListOf<Block>()
 
+    var checkSource = mutableStateOf(false)
+
 //    从文件系统中加载笔记
-    fun loadNote(context: Context) { //2311
+    fun loadNote(context: Context) {
         viewModelScope.launch {
-            note = LocalFileApi.loadNote("${username.value}/${category.value}/${fileName.value}", context)
+            note = NoteLoaderApi.loadNote("${username.value}/${category.value}/${fileName.value}", context)
 
             noteEntity = noteDao.getNoteByName(username.value, category.value, fileName.value)
                 .filterNotNull()
@@ -62,17 +74,14 @@ class EditorViewModel(
         noteBody.add(block)
     }
 
-    fun insertBlockData(index: Int, block: Block) {
-        noteBody.add(index, block)
-    }
-
+//    本地保存笔记
     suspend fun updateNote(context: Context) {
         note = Note(
             title = noteTitle.value,
             body = noteBody
         )
 //        更新到文件系统
-        LocalFileApi.saveNote("${username.value}/${category.value}", fileName.value, note, context)
+        LocalFileApi.saveNote("${username.value}/${category.value}/${fileName.value}", note, context)
 //        更新到数据库
         noteDao.update(noteEntity!!.copy(
             category = category.value,
@@ -81,9 +90,13 @@ class EditorViewModel(
         ))
     }
 
-    var showImageOption = mutableStateOf(false)
-
-    fun setShowImageOption(value: Boolean) {
-        showImageOption.value = value
+    suspend fun upload(
+        path: String,
+        context: Context
+    ) {
+//        本地更新笔记
+        updateNote(context)
+//        上传到云端
+        RemoteFileApi.uploadNote(path, context, viewModelScope, apiService)
     }
 }

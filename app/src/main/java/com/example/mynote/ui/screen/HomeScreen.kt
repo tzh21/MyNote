@@ -1,5 +1,6 @@
 package com.example.mynote.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -48,9 +49,11 @@ fun HomeScreen(
 //    设置用户名和分类
     viewModel.username.value = username
     viewModel.category.value = category
+    viewModel.setNoteList(username, category)
 
 //    从数据库中加载笔记列表
     val noteListState by viewModel.noteListUiState.collectAsState()
+    Log.d("HomeScreen", "size: ${noteListState.noteList.size}")
 
     Scaffold(
         topBar = { MyNoteTopBar(
@@ -79,8 +82,20 @@ fun HomeScreen(
         Column(
             modifier = Modifier.padding(it)
         ) {
-            Text("用户名：$username")
-            Text("分类：$category")
+            Text("用户名：${viewModel.username.value}")
+            Text("分类：${viewModel.category.value}")
+
+            Button(onClick = { }) {
+                Text("上传")
+            }
+
+            Button(onClick = {
+                coroutineScope.launch {
+                    viewModel.download(context)
+                }
+            }) {
+                Text("下载")
+            }
 
             Button(onClick = {
                 navigateToCategory()

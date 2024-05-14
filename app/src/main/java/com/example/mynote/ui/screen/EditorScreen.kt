@@ -47,6 +47,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
 import com.example.mynote.data.LocalFileApi
+import com.example.mynote.data.NoteLoaderApi
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.component.MyNoteTopBar
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
@@ -155,17 +156,17 @@ fun EditorScreen(
                 Column {
                     ImagePickerButton(onImageSelected = { uri ->
                         val currentTime = getCurrentTime()
-                        val imageParentDir = "${viewModel.username.value}/${viewModel.category.value}/assets/image"
-                        LocalFileApi.saveResource(uri, imageParentDir, currentTime, context)
-                        viewModel.addBlockData(Block(BlockType.IMAGE, "$imageParentDir/$currentTime"))
+                        val path = "${viewModel.username.value}/${viewModel.category.value}/assets/image/$currentTime"
+                        LocalFileApi.saveResource(uri, path, context)
+                        viewModel.addBlockData(Block(BlockType.IMAGE, path))
                         viewModel.addBlockData(Block(BlockType.BODY, ""))
                     })
 
                     AudioPickerButton(onAudioSelected = { uri ->
                         val currentTime = getCurrentTime()
-                        val audioParentDir = "${viewModel.username.value}/${viewModel.category.value}/assets/audio"
-                        LocalFileApi.saveResource(uri, audioParentDir, currentTime, context)
-                        viewModel.addBlockData(Block(BlockType.AUDIO, "$audioParentDir/$currentTime"))
+                        val path = "${viewModel.username.value}/${viewModel.category.value}/assets/audio/$currentTime"
+                        LocalFileApi.saveResource(uri, path, context)
+                        viewModel.addBlockData(Block(BlockType.AUDIO, path))
                         viewModel.addBlockData(Block(BlockType.BODY, ""))
                     })
 
@@ -176,6 +177,28 @@ fun EditorScreen(
                         }
                     }) {
                         Text("保存")
+                    }
+
+                    Button(onClick = {
+                        coroutineScope.launch {
+                            viewModel.upload("${viewModel.username.value}/${viewModel.category.value}/${viewModel.fileName.value}", context)
+                        }
+                    }) {
+                        Text("上传")
+                    }
+                }
+            }
+
+            item {
+                Column {
+                    Button(onClick = {
+                        viewModel.checkSource.value = !viewModel.checkSource.value
+                    }) {
+                        Text("显示源代码")
+                    }
+                    if (viewModel.checkSource.value) {
+                        val sourceCode = NoteLoaderApi.loadNoteSource("${viewModel.username.value}/${viewModel.category.value}/${viewModel.fileName.value}", context)
+                        Text(sourceCode)
                     }
                 }
             }

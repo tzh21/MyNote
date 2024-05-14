@@ -11,25 +11,29 @@ object AppViewModelProvider {
         // Initializer for HomeViewModel
         initializer {
             LoginViewModel(
-                myNoteApplication().container.userRepository
+//                myNoteApplication().container.userRepository
+                myNoteApplication().container.myNoteApiService
             )
         }
 
         initializer {
             SignupViewModel(
-                myNoteApplication().container.userRepository
+//                myNoteApplication().container.userRepository
+                myNoteApplication().container.myNoteApiService
             )
         }
 
         initializer {
             HomeViewModel(
-                myNoteApplication().container.noteDao
+                myNoteApplication().container.noteDao,
+                myNoteApplication().container.myNoteApiService
             )
         }
 
         initializer {
             EditorViewModel(
-                myNoteApplication().container.noteDao
+                myNoteApplication().container.noteDao,
+                myNoteApplication().container.myNoteApiService
             )
         }
 

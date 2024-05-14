@@ -1,10 +1,10 @@
 package com.example.mynote.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mynote.data.UserRepository
 import com.example.mynote.network.ErrorResponse
+import com.example.mynote.network.LoginRequest
+import com.example.mynote.network.MyNoteApiService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +27,8 @@ data class LoginState(
 )
 
 class LoginViewModel(
-    private val userRepository: UserRepository
+//    private val userRepository: UserRepository
+    val apiService: MyNoteApiService
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginState())
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
@@ -50,20 +51,21 @@ class LoginViewModel(
                 it.copy(status = LoginStatus.LOADING)
             }
             try {
-                val response = userRepository.login(_uiState.value.email, _uiState.value.password)
+//                val response = userRepository.login(_uiState.value.email, _uiState.value.password)
+                val response = apiService.login(LoginRequest(_uiState.value.email, _uiState.value.password))
                 if (response.isSuccessful) {
                     _uiState.update {
                         it.copy(status = LoginStatus.SUCCESS)
                     }
                 }
                 else {
-                    var errorDetail = ""
                     val errorBody = response.errorBody()?.string()
-                    errorDetail = if (errorBody != null) {
+                    val errorDetail = if (errorBody != null) {
                         Json.decodeFromString<ErrorResponse>(errorBody).error
                     } else {
                         "unknown error"
                     }
+
                     _uiState.update {
                         it.copy(
                             status = LoginStatus.ERROR,

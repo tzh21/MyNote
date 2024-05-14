@@ -2,7 +2,8 @@ package com.example.mynote.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mynote.data.UserRepository
+import com.example.mynote.network.MyNoteApiService
+import com.example.mynote.network.SignupRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +24,8 @@ data class SignupState(
 )
 
 class SignupViewModel(
-    private val userRepository: UserRepository
+//    private val userRepository: UserRepository
+    val apiService: MyNoteApiService
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SignupState("", ""))
     val uiState: StateFlow<SignupState> = _uiState.asStateFlow()
@@ -46,7 +48,8 @@ class SignupViewModel(
                 it.copy(status = SignupStatus.LOADING)
             }
             try {
-                userRepository.signup(_uiState.value.username, _uiState.value.password)
+//                userRepository.signup(_uiState.value.username, _uiState.value.password)
+                apiService.signup(SignupRequest(_uiState.value.username, _uiState.value.password))
                 _uiState.update {
                     it.copy(status = SignupStatus.SUCCESS)
                 }

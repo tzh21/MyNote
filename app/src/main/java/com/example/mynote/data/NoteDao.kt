@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("SELECT * FROM notes ORDER BY lastModifiedTime DESC")
-    fun getAllNotes(): Flow<List<NoteEntity>>
+    @Query("SELECT * FROM notes WHERE username = :username AND category = :category ORDER BY lastModifiedTime DESC")
+    fun getAllNotes(username: String, category: String): Flow<List<NoteEntity>>
 
     @Query("SELECT * FROM notes WHERE username = :username AND category = :category AND fileName = :fileName")
     fun getNoteByName(username: String, category: String, fileName: String): Flow<NoteEntity>
@@ -19,7 +19,7 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE username = :username AND category = :category")
     suspend fun deleteAllNotes(username: String, category: String)
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(note: NoteEntity)
 
     @Update

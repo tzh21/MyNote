@@ -4,14 +4,14 @@
 package com.example.mynote.data
 
 import android.content.Context
-import com.example.mynote.network.UserApiService
+import com.example.mynote.network.MyNoteApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
 
 interface AppContainer {
-    val userRepository: UserRepository
+    val myNoteApiService: MyNoteApiService
     val noteDao: NoteDao
 }
 
@@ -23,12 +23,8 @@ class AppDataContainer(context: Context): AppContainer {
         .baseUrl(BASE_URL)
         .build()
 
-    private val userApiService: UserApiService by lazy {
-        retrofit.create(UserApiService::class.java)
-    }
-
-    override val userRepository: UserRepository by lazy {
-        NetworkUserRepository(userApiService)
+    override val myNoteApiService: MyNoteApiService by lazy {
+        retrofit.create(MyNoteApiService::class.java)
     }
 
     override val noteDao = MyNoteDatabase.getDatabase(context).noteDao()

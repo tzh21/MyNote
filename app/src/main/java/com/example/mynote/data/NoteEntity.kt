@@ -1,9 +1,13 @@
 package com.example.mynote.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "notes")
+@Entity(
+    tableName = "notes",
+    indices = [Index(value = ["username", "category", "fileName"], unique = true)]
+)
 data class NoteEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int,
