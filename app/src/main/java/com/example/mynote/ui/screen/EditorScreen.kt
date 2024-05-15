@@ -156,7 +156,8 @@ fun EditorScreen(
                 Column {
                     ImagePickerButton(onImageSelected = { uri ->
                         val currentTime = getCurrentTime()
-                        val path = "${viewModel.username.value}/${viewModel.category.value}/assets/image/$currentTime"
+                        val path =
+                            "${viewModel.username.value}/${viewModel.category.value}/assets/${viewModel.fileName.value}/image/$currentTime"
                         LocalFileApi.saveResource(uri, path, context)
                         viewModel.addBlockData(Block(BlockType.IMAGE, path))
                         viewModel.addBlockData(Block(BlockType.BODY, ""))
@@ -164,7 +165,8 @@ fun EditorScreen(
 
                     AudioPickerButton(onAudioSelected = { uri ->
                         val currentTime = getCurrentTime()
-                        val path = "${viewModel.username.value}/${viewModel.category.value}/assets/audio/$currentTime"
+                        val path =
+                            "${viewModel.username.value}/${viewModel.category.value}/assets/${viewModel.fileName.value}/audio/$currentTime"
                         LocalFileApi.saveResource(uri, path, context)
                         viewModel.addBlockData(Block(BlockType.AUDIO, path))
                         viewModel.addBlockData(Block(BlockType.BODY, ""))
@@ -293,7 +295,6 @@ fun AudioBlock(
     Box {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = {

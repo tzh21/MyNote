@@ -16,10 +16,8 @@ import com.example.mynote.data.getCurrentTime
 import com.example.mynote.network.ErrorResponse
 import com.example.mynote.network.MyNoteApiService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -83,9 +81,13 @@ class HomeViewModel(
         }
     }
 
-//    从服务器下载当前用户所有分类下的所有文件
+    var showSyncDialog = mutableStateOf(false)
+
+//    从服务器下载当前用户所有分类下的所有笔记以及其依赖文件（如图片、音频等）
     suspend fun download(context: Context) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            showSyncDialog.value = true
+
 //            从服务器获取文件列表
             val response = apiService.list(username.value)
             if (response.isSuccessful) {
@@ -95,13 +97,39 @@ class HomeViewModel(
                 for (filePath in noteList.files) {
                     val fileResponse = apiService.download(filePath)
                     if (fileResponse.isSuccessful) {
-//                        保存到文件系统
+//                        保存笔记到文件系统
+//                        BUG files 会下载图片文件
                         val responseBody = fileResponse.body()!!
                         LocalFileApi.writeFile(filePath, responseBody.byteStream(), context)
 
-//                        更新数据库
+                        val note = NoteLoaderApi.loadNote(filePath, context)
+
+//                        下载依赖文件
+                        val body = note.body
+                        for (block in body) {
+                            if (block.type == BlockType.IMAGE || block.type == BlockType.AUDIO) {
+                                val resourcePath = block.data
+                                val resourceResponse = apiService.download(resourcePath)
+                                if (resourceResponse.isSuccessful) {
+                                    val resourceResponseBody = resourceResponse.body()!!
+                                    Log.d("download", resourceResponseBody.toString())
+                                    LocalFileApi.writeFile(resourcePath, resourceResponseBody.byteStream(), context)
+                                } else {
+                                    val errorBody = resourceResponse.errorBody()?.string()
+                                    val errorDetail = if (errorBody != null) {
+                                        Json.decodeFromString<ErrorResponse>(errorBody).error
+                                    } else {
+                                        "Unknown error"
+                                    }
+
+                                    Log.d("HomeViewModel", errorDetail)
+                                }
+                            }
+                        }
+
+//                        更新数据库中笔记信息
                         val currentTime = getCurrentTime()
-                        val title = NoteLoaderApi.loadNote(filePath, context).title
+                        val title = note.title
                         val fileName = filePath.split("/").last()
                         val categoryName = filePath.split("/").dropLast(1).last()
                         noteDao.insert(NoteEntity(
@@ -135,11 +163,13 @@ class HomeViewModel(
 
                 Log.d("HomeViewModel", errorDetail)
             }
+
+            showSyncDialog.value = false
         }
     }
 
     companion object {
-        private const val TIMEOUT_MILLIS = 5_000L
+        private const val TIMEOUT_MILLIS = 50_000L
     }
 }
 

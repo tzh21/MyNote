@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.component.MyNoteTopBar
@@ -85,10 +86,6 @@ fun HomeScreen(
             Text("用户名：${viewModel.username.value}")
             Text("分类：${viewModel.category.value}")
 
-            Button(onClick = { }) {
-                Text("上传")
-            }
-
             Button(onClick = {
                 coroutineScope.launch {
                     viewModel.download(context)
@@ -131,6 +128,14 @@ fun HomeScreen(
                             Text(noteTitle)
                         }
                     }
+                }
+            }
+        }
+
+        if (viewModel.showSyncDialog.value) {
+            Dialog(onDismissRequest = {  }) {
+                Card {
+                    Text("正在同步数据...")
                 }
             }
         }

@@ -199,6 +199,7 @@ object NoteLoaderApi {
 }
 
 object RemoteFileApi {
+//    上传单个笔记以及其饮用的资源文件（如图片、音频）
     suspend fun uploadNote(
         path: String,
         context: Context,
@@ -206,6 +207,7 @@ object RemoteFileApi {
         apiService: MyNoteApiService
     ) {
         coroutineScope.launch {
+//            上传笔记文件
             val file = File(context.filesDir, path)
             val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
             val formData = MultipartBody.Part.createFormData("file", file.name, requestFile)
@@ -221,6 +223,30 @@ object RemoteFileApi {
                 }
 
                 Log.d("HomeViewModel", errorDetail)
+            }
+
+//            上传资源文件
+            val note = NoteLoaderApi.loadNote(path, context)
+            for (block in note.body) {
+                if (block.type == BlockType.IMAGE || block.type == BlockType.AUDIO) {
+                    val resourcePath = block.data
+                    val resourceFile = File(context.filesDir, resourcePath)
+                    val resourceRequestFile = resourceFile.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+                    val resourceFormData = MultipartBody.Part.createFormData("file", resourceFile.name, resourceRequestFile)
+                    val resourceResponse = apiService.upload(resourcePath, resourceFormData)
+                    if (resourceResponse.isSuccessful) {
+                        Log.d("HomeViewModel", "Upload resource success")
+                    } else {
+                        val errorBody = resourceResponse.errorBody()?.string()
+                        val errorDetail = if (errorBody != null) {
+                            Json.decodeFromString<ErrorResponse>(errorBody).error
+                        } else {
+                            "Unknown error"
+                        }
+
+                        Log.d("HomeViewModel", errorDetail)
+                    }
+                }
             }
         }
     }
