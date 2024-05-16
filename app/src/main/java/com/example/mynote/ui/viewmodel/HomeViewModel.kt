@@ -30,17 +30,42 @@ class HomeViewModel(
     var username = mutableStateOf("null")
     var category = mutableStateOf("null")
 
-    lateinit var noteListUiState: StateFlow<NoteListUiState>
+    var queryText = mutableStateOf("")
 
-    fun setNoteList(_username: String, _category: String) {
-        if (!::noteListUiState.isInitialized) {
-            noteListUiState = noteDao.getAllNotes(_username, _category).map { NoteListUiState(_username, _category, it) }
+    lateinit var noteListStateFlow: StateFlow<NoteListUiState>
+
+    fun initialNoteList() {
+        if (!::noteListStateFlow.isInitialized) {
+            noteListStateFlow = noteDao.getAllNotesInCategory(username.value, category.value).map { NoteListUiState(it) }
                 .stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
                     initialValue = NoteListUiState()
                 )
         }
+    }
+
+    var isQueryFocused = mutableStateOf(false)
+    lateinit var queryNoteListStateFlow: StateFlow<NoteListUiState>
+
+    fun initialQueryNoteList() {
+        if (!::queryNoteListStateFlow.isInitialized) {
+            queryNoteListStateFlow = noteDao.getAllNotes(username.value).map { NoteListUiState(it) }
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
+                    initialValue = NoteListUiState()
+                )
+        }
+    }
+
+    fun setQueryNoteList(query: String) {
+        queryNoteListStateFlow = noteDao.filterNotes(username.value, query).map { NoteListUiState(it) }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
+                initialValue = NoteListUiState()
+            )
     }
 
 //    在当前分类下创建一个笔记
@@ -174,7 +199,5 @@ class HomeViewModel(
 }
 
 data class NoteListUiState(
-    val username: String = "null",
-    val category: String = "null",
     val noteList: List<NoteEntity> = listOf(),
 )
