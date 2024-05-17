@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="text_field_height">56dp</dimen>
+    <dimen name="text_field_text_size">56dp</dimen>
+    <dimen name="rounded_corner_size">8dp</dimen>
+</resources>

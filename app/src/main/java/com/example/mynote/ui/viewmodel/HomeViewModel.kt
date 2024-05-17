@@ -2,6 +2,8 @@ package com.example.mynote.ui.viewmodel
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -192,6 +194,14 @@ class HomeViewModel(
             showSyncDialog.value = false
         }
     }
+
+//    var categoryList = mutableStateListOf<String>()
+//    var selectedCategoryIndex = mutableIntStateOf(0)
+//
+//    fun initCategoryList(context: Context) {
+//        categoryList.clear()
+//        categoryList.addAll(LocalFileApi.listDirs(username.value, context))
+//    }
 
     companion object {
         private const val TIMEOUT_MILLIS = 50_000L

@@ -2,14 +2,39 @@
 
 package com.example.mynote.ui.screen
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mynote.R
+import com.example.mynote.ui.component.MyNoteTopBar
+import com.example.mynote.ui.theme.DarkColorScheme
+import com.example.mynote.ui.theme.LightColorScheme
+import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.LoginStatus
 import com.example.mynote.ui.viewmodel.LoginViewModel
@@ -23,53 +48,141 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState = viewModel.uiState.collectAsState()
+    val focusManager = LocalFocusManager.current
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
+    Scaffold(
+        topBar = {
+            MyNoteTopBar(
+                title = "登录或注册",
+                canNavigateBack = false
+            )
+        }
     ) {
-//            账号输入框
-        TextField(
-            value = uiState.value.email,
-            onValueChange = { viewModel.onEmailChange(it) },
-            label = { Text("账号") },
-        )
+        Box(
+            modifier = Modifier
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        focusManager.clearFocus()
+                    }
+                }
+                .padding(it)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .widthIn(max = 1000.dp)
+                    .fillMaxSize()
+                    .padding(32.dp)
+            ) {
+                OutlinedTextField(
+                    value = uiState.value.email,
+                    onValueChange = { viewModel.onEmailChange(it) },
+                    label = { Text("账号") },
+                    shape = RoundedCornerShape(dimensionResource(R.dimen.rounded_corner_size)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
 
-//            密码输入框
-        TextField(
-            value = uiState.value.password,
-            onValueChange = { viewModel.onPasswordChange(it) },
-            label = { Text("密码") },
-            visualTransformation = PasswordVisualTransformation(),
-        )
+//                    密码输入框
+                OutlinedTextField(
+                    value = uiState.value.password,
+                    onValueChange = { viewModel.onPasswordChange(it) },
+                    label = { Text("密码") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    shape = RoundedCornerShape(dimensionResource(R.dimen.rounded_corner_size)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
 
-//            登录按钮
-        Button(onClick = {
-            viewModel.onLoginTriggered()
-        }) {
-            Text("登录")
-        }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                ) {
+                    Button(
+                        onClick = {
+                            viewModel.onLoginTriggered()
+                        },
+                        shape = RoundedCornerShape(dimensionResource(R.dimen.rounded_corner_size)),
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .height(dimensionResource(id = R.dimen.text_field_height))
+                            .weight(1f)
+                    ) {
+                        Text(
+                            text = "登录",
+                            fontSize = Typography.titleMedium.fontSize,
+    //                        fontSize = dimensionResource(id = R.dimen.text_field_text_size),
+                        )
+                    }
 
-//            注册按钮
-        Button(onClick = {
-            navigateToSignup()
-        }) {
-            Text("前往注册")
-        }
+    //                    注册按钮
+                    FilledTonalButton(
+                        onClick = {
+                            navigateToSignup()
+                        },
+                        shape = RoundedCornerShape(dimensionResource(R.dimen.rounded_corner_size)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(dimensionResource(id = R.dimen.text_field_height))
+                            .weight(1f)
+                            .padding(start = 4.dp)
+                    ) {
+                        Text(
+                            "注册",
+                            fontSize = Typography.titleMedium.fontSize,
+                        )
+                    }
+                }
 
-        when (uiState.value.status) {
-            LoginStatus.SUCCESS -> {
-                Text("登录成功")
-                navigateToHome(uiState.value.email)
-            }
-            LoginStatus.ERROR -> {
-                Text("登录失败")
-                Text(uiState.value.errorDetail)
-            }
-            LoginStatus.LOADING -> {
-                Text("登录中...")
-            }
-            LoginStatus.INACTIVE -> {
-                Text("未登录")
+                if (uiState.value.status != LoginStatus.INACTIVE) {
+                    val cardColors = if(uiState.value.status == LoginStatus.ERROR) {
+                        if (isSystemInDarkTheme()) {
+                            CardDefaults.cardColors(
+                                containerColor = DarkColorScheme.errorContainer,
+                                contentColor = DarkColorScheme.error,
+                            )
+                        }
+                        else {
+                            CardDefaults.cardColors(
+                                containerColor = LightColorScheme.errorContainer,
+                                contentColor = LightColorScheme.error,
+                            )
+                        }
+                    } else {
+                        CardDefaults.cardColors()
+                    }
+
+                    Card(
+                        colors = cardColors,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                    ) {
+                        @Composable
+                        fun StatusText(text: String) {
+                            Text(
+                                text = text,
+                                modifier = Modifier.padding(16.dp),
+                            )
+                        }
+
+                        when (uiState.value.status) {
+                            LoginStatus.SUCCESS -> {
+                                StatusText("登录成功")
+                                navigateToHome(uiState.value.email)
+                            }
+                            LoginStatus.ERROR -> {
+                                StatusText("登录失败")
+                                StatusText(uiState.value.errorDetail)
+                            }
+                            LoginStatus.LOADING -> {
+                                StatusText("登录中...")
+                            }
+                            else -> {}
+                        }
+                    }
+                }
             }
         }
     }

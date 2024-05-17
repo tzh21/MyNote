@@ -1,5 +1,6 @@
 package com.example.mynote.ui.viewmodel
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mynote.network.ErrorResponse
@@ -27,7 +28,6 @@ data class LoginState(
 )
 
 class LoginViewModel(
-//    private val userRepository: UserRepository
     val apiService: MyNoteApiService
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginState())
@@ -51,7 +51,6 @@ class LoginViewModel(
                 it.copy(status = LoginStatus.LOADING)
             }
             try {
-//                val response = userRepository.login(_uiState.value.email, _uiState.value.password)
                 val response = apiService.login(LoginRequest(_uiState.value.email, _uiState.value.password))
                 if (response.isSuccessful) {
                     _uiState.update {
@@ -75,9 +74,14 @@ class LoginViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(status = LoginStatus.ERROR)
+                    it.copy(
+                        status = LoginStatus.ERROR,
+                        errorDetail = e.message ?: "unknown error"
+                    )
                 }
             }
         }
     }
+
+    val showDialog = mutableStateOf(false)
 }
