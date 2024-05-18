@@ -82,6 +82,11 @@ class LoginViewModel(
             }
         }
     }
-
-    val showDialog = mutableStateOf(false)
+    fun defaultLogin() {
+        _uiState.update {
+            it.copy(email = "3", password = "4")
+        }
+        onLoginTriggered()
+    }
 }
+

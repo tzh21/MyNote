@@ -4,26 +4,56 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Environment
 import android.provider.MediaStore
+import android.view.ViewTreeObserver
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,13 +61,26 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusTarget
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
@@ -49,7 +92,8 @@ import com.example.mynote.data.BlockType
 import com.example.mynote.data.LocalFileApi
 import com.example.mynote.data.NoteLoaderApi
 import com.example.mynote.data.getCurrentTime
-import com.example.mynote.ui.component.MyNoteTopBar
+import com.example.mynote.ui.theme.DarkColorScheme
+import com.example.mynote.ui.theme.LightColorScheme
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
@@ -63,13 +107,11 @@ data object EditorRoute {
     const val complete = "$base/{$username}/{$category}/{$noteTitle}"
 }
 
-// 对于 IMAGE 类型的 block，data 为图片的 uri
-// 对于 BODY 类型的 block，data 为文本内容
-// 后续可能会添加更多类型，比如标题、引用、todolist 等
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditorScreen(
-    navigateUp: () -> Unit,
+    navigateToHome: () -> Unit,
+    navigateToEditor: (String, String) -> Unit,
     username: String,
     category: String,
     fileName: String,
@@ -85,122 +127,249 @@ fun EditorScreen(
     viewModel.initExoPlayer(context)
 
     Scaffold(
-        topBar = { MyNoteTopBar(
-            title = "Editor",
-            canNavigateBack = true,
-            navigateUp = {
-//                退出时自动保存
-//                目前不支持使用系统返回动作（如滑动），只点击支持返回按钮
-//                可以将系统返回动作视为放弃更改；在展示时尽量避免执行系统返回动作。
-                coroutineScope.launch {
-                    viewModel.updateNote(context)
-                    navigateUp()
+        topBar = {
+            TopAppBar(
+                title = {  },
+                navigationIcon = {
+                    IconButton(onClick = {
+                            coroutineScope.launch {
+                                viewModel.saveNote(context)
+                                navigateToHome()
+                            }
+                        },
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "Back to home",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+                actions = {
+                    var expanded by remember { mutableStateOf(false) }
+                    viewModel.initCategoryList(context)
+                    Row(
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        AssistChip(
+                            onClick = {
+                                expanded = true
+                                      },
+                            label = { Text(text = viewModel.category.value) },
+                            border = null,
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            ),
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
+
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = {expanded = false}
+                        ) {
+                            viewModel.categoryList.forEach { categoryItem ->
+                                DropdownMenuItem(
+                                    text = { Text(categoryItem) },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            expanded = false
+                                            viewModel.moveNote(
+                                                categoryItem,
+                                                context
+                                            )
+                                            navigateToEditor(categoryItem, viewModel.fileName.value)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        IconButton(onClick = {
+                            coroutineScope.launch {
+                                viewModel.upload("${viewModel.username.value}/${viewModel.category.value}/${viewModel.fileName.value}", context)
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Cloud upload",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
-            }
-        ) }
-    ) {
-        LazyColumn(
+            )
+        }
+    ) { paddingValues ->
+        val focusManager = LocalFocusManager.current
+        Box(
             modifier = Modifier
-                .padding(it)
-                .focusTarget()
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        focusManager.clearFocus()
+                    }
+                }
+                .padding(paddingValues)
         ) {
-            item {
-                TextField(
-                    value = viewModel.noteTitle.value,
-                    onValueChange = { newTitle -> viewModel.noteTitle.value = newTitle },
-                    placeholder = { Text("标题") }
-                )
-            }
+            Column {
 
-            item {
-                Text("创建日期：${viewModel.fileName.value}")
-            }
+//                监听键盘状态，以确保底部按钮不被键盘遮挡
+                val view = LocalView.current
+                val density = LocalDensity.current
+                val isImeVisible = remember { mutableStateOf(false) }
+                val keypadHeightPx = remember { mutableIntStateOf(0) }
+                DisposableEffect(view) {
+                    val onGlobalListener = ViewTreeObserver.OnGlobalLayoutListener {
+                        val rect = android.graphics.Rect()
+                        view.getWindowVisibleDisplayFrame(rect)
+                        val screenHeight = view.rootView.height
+                        keypadHeightPx.value = screenHeight - rect.bottom
+                        isImeVisible.value = keypadHeightPx.value > screenHeight * 0.15
+                    }
+                    view.viewTreeObserver.addOnGlobalLayoutListener(onGlobalListener)
 
-            items(viewModel.noteBody.size) { index ->
-                when (viewModel.noteBody[index].type) {
-                    BlockType.BODY -> {
-                        TextBlock(
-                            viewModel.noteBody[index].data,
-                            onValueChange = { newText ->
-                                viewModel.changeText(index, newText)
+                    onDispose {
+                        view.viewTreeObserver.removeOnGlobalLayoutListener(onGlobalListener)
+                    }
+                }
+
+//                var currentBlockIndex = remember {
+//                    mutableStateOf(0)
+//                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .weight(1f)
+                ) {
+//                    标题栏
+                    item {
+                        val titleTextSize = 32.sp
+                        BasicTextField(
+                            value = viewModel.noteTitle.value,
+                            onValueChange = { newTitle -> viewModel.noteTitle.value = newTitle },
+                            textStyle = TextStyle(fontSize = titleTextSize),
+                            decorationBox = { innerTextField ->
+                                if (viewModel.noteTitle.value.isEmpty()) {
+                                    Text(
+                                        text = "笔记标题",
+                                        style = TextStyle(
+                                            color = Color.Gray,
+                                            fontSize = titleTextSize
+                                        ),
+                                    )
+                                }
+                                innerTextField()
                             },
                         )
                     }
 
-                    BlockType.IMAGE -> {
-                        val path = viewModel.noteBody[index].data
-                        val uri = File(context.filesDir, path).toUri().toString()
-                        ImageBlock(
-                            imageUri = uri,
-                            removeBlock = {
-                                removeAndCat(viewModel.noteBody, index, context)
-                            }
+//                    修改时间
+                    item {
+                        Text(
+                            "上次修改：${viewModel.noteEntity?.lastModifiedTime ?: "未知"}",
+                            style = TextStyle(color = Color.LightGray),
+                            modifier = Modifier.padding(top = 12.dp)
                         )
                     }
 
-                    BlockType.AUDIO -> {
-                        val path = viewModel.noteBody[index].data
-                        val uri = File(context.filesDir, path).toUri().toString()
-                        AudioBlock(
-                            audioUri = uri,
-                            viewModel.player,
-                            removeBlock = {
-                                removeAndCat(viewModel.noteBody, index, context)
+                    item {
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+//                    笔记正文
+                    items(viewModel.noteBody.size) { index ->
+                        when (viewModel.noteBody[index].type) {
+                            BlockType.BODY -> {
+                                val normalTextSize = 16.sp
+                                val normalTextLineHeight = normalTextSize * 1.5f
+                                BasicTextField(
+                                    value = viewModel.noteBody[index].data,
+                                    onValueChange = { newText ->
+                                        viewModel.changeText(index, newText)
+                                    },
+                                    textStyle = TextStyle(
+                                        fontSize = normalTextSize,
+                                        lineHeight = normalTextLineHeight,
+                                        lineBreak = LineBreak.Paragraph
+                                    ),
+                                    keyboardOptions = KeyboardOptions.Default.copy(
+                                        imeAction = ImeAction.Next
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onNext = {
+                                            viewModel.noteBody.add(index + 1, Block(BlockType.BODY, ""))
+                                            focusManager.moveFocus(FocusDirection.Down)
+                                        }
+                                    ),
+                                    modifier = Modifier
+                                        .onKeyEvent {
+                                            if (it.key == Key.Backspace && viewModel.noteBody[index].data.isEmpty() && viewModel.noteBody.size > 1) {
+                                                viewModel.noteBody.removeAt(index)
+                                                focusManager.moveFocus(FocusDirection.Up)
+                                            }
+                                            false
+                                        }
+                                        .padding(bottom = 16.dp)
+                                        .onFocusChanged { focusState ->
+                                            if (focusState.isFocused) {
+                                                viewModel.currentBlockIndex.value = index
+                                            }
+                                        }
+                                )
                             }
+
+                            BlockType.IMAGE -> {
+                                val path = viewModel.noteBody[index].data
+                                val uri = File(context.filesDir, path).toUri().toString()
+                                ImageBlock(
+                                    imageUri = uri,
+                                    removeBlock = {
+                                        removeAndCat(viewModel.noteBody, index, context)
+                                    }
+                                )
+                            }
+
+                            BlockType.AUDIO -> {
+                                val path = viewModel.noteBody[index].data
+                                val uri = File(context.filesDir, path).toUri().toString()
+                                AudioBlock(
+                                    audioUri = uri,
+                                    viewModel.player,
+                                    removeBlock = {
+                                        removeAndCat(viewModel.noteBody, index, context)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = if (isImeVisible.value) with(density) { keypadHeightPx.value.toDp() + 16.dp } else 16.dp,
                         )
-                    }
-                }
-            }
-
-            item {
-                Column {
-                    ImagePickerButton(onImageSelected = { uri ->
-                        val currentTime = getCurrentTime()
-                        val path =
-                            "${viewModel.username.value}/${viewModel.category.value}/assets/${viewModel.fileName.value}/image/$currentTime"
-                        LocalFileApi.saveResource(uri, path, context)
-                        viewModel.addBlockData(Block(BlockType.IMAGE, path))
-                        viewModel.addBlockData(Block(BlockType.BODY, ""))
-                    })
-
-                    AudioPickerButton(onAudioSelected = { uri ->
-                        val currentTime = getCurrentTime()
-                        val path =
-                            "${viewModel.username.value}/${viewModel.category.value}/assets/${viewModel.fileName.value}/audio/$currentTime"
-                        LocalFileApi.saveResource(uri, path, context)
-                        viewModel.addBlockData(Block(BlockType.AUDIO, path))
-                        viewModel.addBlockData(Block(BlockType.BODY, ""))
-                    })
-
-//                    保存数据到 json 文件
-                    Button(onClick = {
+                ) {
+                    CameraButton { uri ->
                         coroutineScope.launch {
-                            viewModel.updateNote(context)
+                            viewModel.saveImage(uri, context)
                         }
-                    }) {
-                        Text("保存")
                     }
 
-                    Button(onClick = {
+                    ImagePickerButton { uri ->
                         coroutineScope.launch {
-                            viewModel.upload("${viewModel.username.value}/${viewModel.category.value}/${viewModel.fileName.value}", context)
+                            viewModel.saveImage(uri, context)
                         }
-                    }) {
-                        Text("上传")
                     }
-                }
-            }
 
-            item {
-                Column {
-                    Button(onClick = {
-                        viewModel.checkSource.value = !viewModel.checkSource.value
-                    }) {
-                        Text("显示源代码")
+                    AudioRecorderButton { uri ->
+                        viewModel.saveAudio(uri, context)
                     }
-                    if (viewModel.checkSource.value) {
-                        val sourceCode = NoteLoaderApi.loadNoteSource("${viewModel.username.value}/${viewModel.category.value}/${viewModel.fileName.value}", context)
-                        Text(sourceCode)
+
+                    AudioPickerButton { uri ->
+                        viewModel.saveAudio(uri, context)
                     }
                 }
             }
@@ -208,16 +377,24 @@ fun EditorScreen(
     }
 }
 
-@Composable
-fun TextBlock(
-    text: String,
-    onValueChange: (String) -> Unit,
-) {
-    TextField(
-        value = text, onValueChange = onValueChange,
-        placeholder = { Text("Enter text here") },
-    )
-}
+//fun saveImage(
+//    username: String,
+//    category: String,
+//    fileName: String,
+//    noteBody: SnapshotStateList<Block>,
+//    uri: Uri,
+//    currentBlockIndex: Int,
+//    context: Context
+//) {
+//    val currentTime = getCurrentTime()
+//    val path =
+//        "$username/$category/assets/$fileName/image/$currentTime"
+//    LocalFileApi.saveResource(uri, path, context)
+//    noteBody.add(currentBlockIndex + 1, Block(BlockType.IMAGE, path))
+//    if (noteBody.size <= currentBlockIndex + 2) {
+//        noteBody.add(currentBlockIndex + 2, Block(BlockType.BODY, ""))
+//    }
+//}
 
 //isError = true, // 展示错误提示
 //keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), // 将键盘的回车键定义为搜索
@@ -338,7 +515,6 @@ fun AudioBlock(
 @Composable
 fun ImagePickerButton(
     onImageSelected: (Uri) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val pickImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -349,15 +525,61 @@ fun ImagePickerButton(
         }
     }
 
-    Button(
+    IconButton(
         onClick = {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             pickImageLauncher.launch(intent)
-        },
-        modifier = modifier
+        }
     ) {
-        // Replace with your button text
-        Text("导入图片")
+        Icon(
+            imageVector = Icons.Default.Image,
+            contentDescription = "Image",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+var tempImageFile = File("")
+
+@Composable
+fun CameraButton(
+    onImageCaptured: (Uri) -> Unit,
+) {
+    val context = LocalContext.current
+    val takePictureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
+        if (isSuccess) {
+            // Assuming you are saving the image to a temporary file
+            val imageUri = FileProvider.getUriForFile(
+                context,
+                context.packageName + ".provider",
+                tempImageFile
+            )
+            onImageCaptured(imageUri)
+        }
+    }
+
+    IconButton(
+        onClick = {
+            val outputDirectory = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val photoFile = File.createTempFile(
+                "temp_", /* prefix */
+                ".jpg", /* suffix */
+                outputDirectory /* directory */
+            )
+            tempImageFile = photoFile // Assigning the temporary file to a global variable
+            val photoURI = FileProvider.getUriForFile(
+                context,
+                context.packageName + ".provider",
+                photoFile
+            )
+            takePictureLauncher.launch(photoURI)
+        }
+    ) {
+        Icon(
+            imageVector = Icons.Default.PhotoCamera,
+            contentDescription = "Camera",
+            tint = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
@@ -374,15 +596,47 @@ fun AudioPickerButton(
         }
     }
 
-    Button(
+    IconButton(
         onClick = {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
             pickAudioLauncher.launch(intent)
         }
     ) {
-        Text("导入音频")
+        Icon(
+            imageVector = Icons.Default.AudioFile,
+            contentDescription = "Audio",
+            tint = MaterialTheme.colorScheme.primary
+        )
     }
 }
+
+@Composable
+fun AudioRecorderButton(
+    onAudioRecorded: (Uri) -> Unit,
+) {
+    val recordAudioLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val audioUri = result.data?.data
+            if (audioUri != null) {
+                onAudioRecorded(audioUri)
+            }
+        }
+    }
+
+    IconButton(
+        onClick = {
+            val intent = Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION)
+            recordAudioLauncher.launch(intent)
+        }
+    ) {
+        Icon(
+            imageVector = Icons.Default.Mic,
+            contentDescription = "Record Audio",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
 
 fun removeAndCat(
     blockList: SnapshotStateList<Block>,

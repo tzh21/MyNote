@@ -17,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,6 +31,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mynote.Config
 import com.example.mynote.R
 import com.example.mynote.ui.component.MyNoteTopBar
 import com.example.mynote.ui.theme.DarkColorScheme
@@ -112,7 +114,6 @@ fun LoginScreen(
                         Text(
                             text = "登录",
                             fontSize = Typography.titleMedium.fontSize,
-    //                        fontSize = dimensionResource(id = R.dimen.text_field_text_size),
                         )
                     }
 
@@ -135,20 +136,20 @@ fun LoginScreen(
                     }
                 }
 
+                if (Config.isDebug) {
+                    Button(onClick = {
+                        viewModel.defaultLogin()
+                    }) {
+                        Text(text = "默认用户登录")
+                    }
+                }
+
                 if (uiState.value.status != LoginStatus.INACTIVE) {
                     val cardColors = if(uiState.value.status == LoginStatus.ERROR) {
-                        if (isSystemInDarkTheme()) {
-                            CardDefaults.cardColors(
-                                containerColor = DarkColorScheme.errorContainer,
-                                contentColor = DarkColorScheme.error,
-                            )
-                        }
-                        else {
-                            CardDefaults.cardColors(
-                                containerColor = LightColorScheme.errorContainer,
-                                contentColor = LightColorScheme.error,
-                            )
-                        }
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.error,
+                        )
                     } else {
                         CardDefaults.cardColors()
                     }

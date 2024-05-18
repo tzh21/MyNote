@@ -78,7 +78,7 @@ class HomeViewModel(
 //        文件系统中创建文件
         val note = Note(
             title = "",
-            body = listOf(Block(type = BlockType.BODY, data = ""))
+            body = listOf(Block(type = BlockType.BODY, data = ""), Block(type = BlockType.BODY, data = ""))
         )
         LocalFileApi.saveNote(
             "${username.value}/${category.value}/$fileName",
@@ -104,7 +104,7 @@ class HomeViewModel(
     //        从数据库中删除所有笔记
             noteDao.deleteAllNotes(username.value, category.value)
     //        从文件系统中删除所有笔记
-            LocalFileApi.deleteAllFiles("${username.value}/${category.value}", context)
+            LocalFileApi.clearDir("${username.value}/${category.value}", context)
         }
     }
 
@@ -195,13 +195,17 @@ class HomeViewModel(
         }
     }
 
-//    var categoryList = mutableStateListOf<String>()
-//    var selectedCategoryIndex = mutableIntStateOf(0)
-//
-//    fun initCategoryList(context: Context) {
-//        categoryList.clear()
-//        categoryList.addAll(LocalFileApi.listDirs(username.value, context))
-//    }
+    var categoryList = mutableStateListOf<String>()
+    var selectedCategoryIndex = mutableIntStateOf(0)
+
+    fun initCategoryList(context: Context) {
+        categoryList.clear()
+        categoryList.addAll(LocalFileApi.listDirs(username.value, context))
+    }
+
+    fun initSelectedCategoryIndex(category: String) {
+        selectedCategoryIndex.value = categoryList.indexOf(category)
+    }
 
     companion object {
         private const val TIMEOUT_MILLIS = 50_000L

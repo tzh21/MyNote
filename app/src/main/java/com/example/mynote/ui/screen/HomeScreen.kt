@@ -1,9 +1,13 @@
 package com.example.mynote.ui.screen
 
+import android.content.res.Configuration
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -20,7 +25,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
@@ -29,6 +36,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -55,21 +63,31 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.component.MyNoteTopBar
+import com.example.mynote.ui.theme.DarkColorScheme
 import com.example.mynote.ui.theme.LightColorScheme
+import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json.Default.configuration
+import java.io.File
 
 data object HomeRoute {
     const val base = "home"
@@ -79,12 +97,13 @@ data object HomeRoute {
     const val complete = "$base/{$username}/{$category}"
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun HomeScreen(
     navigateToCategory: () -> Unit,
     navigateToEditorScreen: (String) -> Unit,
     navigateToLogin: () -> Unit,
+    navigateToHome: (String) -> Unit,
     username: String,
     category: String,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
@@ -100,12 +119,23 @@ fun HomeScreen(
 
 //    从数据库中加载笔记列表
     val noteListState by viewModel.noteListStateFlow.collectAsState()
-    Log.d("HomeScreen", "size: ${noteListState.noteList.size}")
 
     Scaffold(
         topBar = {
             MediumTopAppBar(
                 title = { Text(text = "笔记", modifier = Modifier.padding(start = 16.dp)) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navigateToLogin() },
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Logout,
+                            contentDescription = "Logout",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
                 actions = {
                     Row(
                         modifier = Modifier.padding(end = 8.dp)
@@ -118,9 +148,9 @@ fun HomeScreen(
                             },
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Download,
+                                imageVector = Icons.Default.CloudDownload,
                                 contentDescription = "Download",
-                                tint = LightColorScheme.primary
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
 
@@ -128,15 +158,15 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.Folder,
                                 contentDescription = "Category",
-                                tint = LightColorScheme.primary
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
 
-                        IconButton(onClick = { navigateToLogin() }) {
+                        IconButton(onClick = { }) {
                             Icon(
-                                imageVector = Icons.Default.Logout,
-                                contentDescription = "Logout",
-                                tint = LightColorScheme.primary
+                                imageVector = Icons.Default.CheckCircleOutline,
+                                contentDescription = "Multiselect",
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
 
@@ -148,7 +178,7 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Delete",
-                                tint = LightColorScheme.error
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -167,6 +197,7 @@ fun HomeScreen(
                         navigateToEditorScreen(currentTime)
                     }
                 },
+                containerColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 32.dp, end = 16.dp)
             ) {
                 Icon(
@@ -268,59 +299,86 @@ fun HomeScreen(
                     }
                 }
 
-//                viewModel.initCategoryList(context)
-//
-//                var selectedIndex by rememberSavable {
-//                    mutableStateOf(0)
-//                }
-//
-//                LazyRow {
-//                    items(viewModel.categoryList.size) { index ->
-//                        FilterChip(
-//                            onClick = {selectedIndex = index},
-//                            label = {
-//                                Text(text = viewModel.categoryList[index])
-//                            },
-//                            selected = (index == selectedIndex)
-//                        )
-//                    }
-//                }
+                viewModel.initCategoryList(context)
+                viewModel.initSelectedCategoryIndex(category)
 
+                LazyRow(
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    items(viewModel.categoryList.size) { index ->
+                        FilterChip(
+                            onClick = {
+                                navigateToHome(viewModel.categoryList[index])
+                                      },
+                            label = {
+                                Text(text = viewModel.categoryList[index])
+                            },
+                            selected = (index == viewModel.selectedCategoryIndex.value),
+                            border = null,
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .height(48.dp)
+                        )
+                    }
+                }
+
+                val orientation = LocalConfiguration.current.orientation
                 LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Adaptive(180.dp)
+                    columns = if (orientation == Configuration.ORIENTATION_PORTRAIT) StaggeredGridCells.Fixed(2)
+                        else StaggeredGridCells.Adaptive(160.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalItemSpacing = 8.dp,
+                    modifier = Modifier.padding(top = 16.dp)
                 ) {
                     items(noteListState.noteList.size) { index ->
                         Card(
-                            modifier = Modifier.clickable {
-                                navigateToEditorScreen(noteListState.noteList[index].fileName)
-                            }
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+//                                containerColor = Color.White
+                            ),
+                            modifier = Modifier
+                                .clickable {
+                                    navigateToEditorScreen(noteListState.noteList[index].fileName)
+                                }
                         ) {
-                            val noteTitle = noteListState.noteList[index].title
-                            if (noteTitle == "") {
-                                Text("未命名")
-                            } else {
-                                Text(noteTitle)
+                            Column {
+//                                图片
+                                if (noteListState.noteList[index].coverImage != "") {
+                                    val imagePath = noteListState.noteList[index].coverImage
+                                    val file = File(context.filesDir, imagePath)
+                                    if (file.exists()) {
+                                        val image = file.toUri().toString()
+                                        GlideImage(
+                                            model = image,
+                                            contentDescription = "image",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .height(200.dp)
+                                        )
+                                    }
+                                }
+//                                文本
+                                Column(
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                ) {
+                                    val noteTitle = noteListState.noteList[index].title
+                                    Text(
+                                        text = if (noteTitle == "") "未命名" else noteTitle,
+                                        fontSize = Typography.titleLarge.fontSize,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = noteListState.noteList[index].lastModifiedTime,
+                                        fontSize = Typography.bodyMedium.fontSize,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }
                 }
-
-//                LazyColumn {
-//                    items(noteListState.noteList.size) { index ->
-//                        Card(
-//                            modifier = Modifier.clickable {
-//                                navigateToEditorScreen(noteListState.noteList[index].fileName)
-//                            }
-//                        ) {
-//                            val noteTitle = noteListState.noteList[index].title
-//                            if (noteTitle == "") {
-//                                Text("未命名")
-//                            } else {
-//                                Text(noteTitle)
-//                            }
-//                        }
-//                    }
-//                }
             }
         }
     }

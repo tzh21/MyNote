@@ -51,10 +51,11 @@ fun MyNoteNavHost(
             val username = it.arguments?.getString(HomeRoute.username) ?: "null"
             val category = it.arguments?.getString(HomeRoute.category) ?: HomeRoute.defaultCategory
             HomeScreen(
-                navigateToCategory = { navController.navigate("${CategoryRoute.base}/$username") },
+                navigateToCategory = { navController.navigate("${CategoryRoute.base}/$username/$category") },
                 navigateToEditorScreen = { noteTitle ->
                     navController.navigate("${EditorRoute.base}/$username/$category/$noteTitle")},
                 navigateToLogin = { navController.navigate(LoginRoute) },
+                navigateToHome = { newCategory -> navController.navigate("${HomeRoute.base}/$username/$newCategory") },
                 username = username,
                 category = category,
             )
@@ -63,14 +64,17 @@ fun MyNoteNavHost(
         composable(
             route = CategoryRoute.complete,
             arguments = listOf(
-                navArgument(CategoryRoute.username) {type = NavType.StringType}
+                navArgument(CategoryRoute.username) {type = NavType.StringType},
+                navArgument(CategoryRoute.currentCategory) {type = NavType.StringType}
             )
         ) {
             val username = it.arguments?.getString(CategoryRoute.username) ?: "null"
+            val currentCategory = it.arguments?.getString(CategoryRoute.currentCategory) ?: HomeRoute.defaultCategory
             CategoryScreen(
                 navigateToHome = { category ->
                     navController.navigate("${HomeRoute.base}/$username/$category") },
                 username = username,
+                currentCategory = currentCategory
             )
         }
 
@@ -86,7 +90,10 @@ fun MyNoteNavHost(
             val category = it.arguments?.getString(EditorRoute.category) ?: HomeRoute.defaultCategory
             val noteTitle = it.arguments?.getString(EditorRoute.noteTitle) ?: "null"
             EditorScreen(
-                navigateUp = { navController.navigateUp() },
+//                navigateUp = { navController.navigateUp() },
+                navigateToHome = { navController.navigate("${HomeRoute.base}/$username/$category") },
+                navigateToEditor = { newCategory, newFileName  ->
+                    navController.navigate("${EditorRoute.base}/$username/$newCategory/$newFileName") },
                 username = username,
                 category = category,
                 fileName = noteTitle,

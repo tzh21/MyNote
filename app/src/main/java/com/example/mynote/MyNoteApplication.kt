@@ -19,3 +19,7 @@ class MyNoteApplication : Application() {
         container = AppDataContainer(this)
     }
 }
+
+object Config {
+    var isDebug = true
+}

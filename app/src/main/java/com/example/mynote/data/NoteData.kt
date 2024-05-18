@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.viewModelScope
 import com.example.mynote.network.ErrorResponse
 import com.example.mynote.network.MyNoteApiService
 import com.google.gson.Gson
@@ -75,6 +74,50 @@ object LocalFileApi {
         }
     }
 
+    fun copyFile(
+        from: String, to: String,
+        context: Context
+    ) {
+        val oldFile = File(context.filesDir, from)
+        if (oldFile.exists()) {
+            val newFile = createFile(to, context)
+            oldFile.copyTo(newFile, true)
+        }
+    }
+
+    fun copyDir(
+        from: String, to: String,
+        context: Context
+    ) {
+        val oldDir = File(context.filesDir, from)
+        if (oldDir.exists()) {
+            val newDir = createDir(to, context)
+            oldDir.copyRecursively(newDir, true)
+        }
+    }
+
+    fun moveFile(
+        from: String, to: String,
+        context: Context
+    ) {
+        val oldFile = File(context.filesDir, from)
+        if (oldFile.exists()) {
+            val newFile = createFile(to, context)
+            oldFile.renameTo(newFile)
+        }
+    }
+
+    fun moveDir(
+        from: String, to: String,
+        context: Context
+    ) {
+        val oldDir = File(context.filesDir, from)
+        if (oldDir.exists()) {
+            val newDir = createDir(to, context)
+            oldDir.renameTo(newDir)
+        }
+    }
+
     fun saveNote(
         path: String, note: Note, context: Context
     ) {
@@ -139,20 +182,35 @@ object LocalFileApi {
     }
 
 //    删除目录下的所有文件和文件夹
-    fun deleteAllFiles(
+    fun deleteDir(
         path: String,
         context: Context
     ) {
-        val root = context.filesDir
-        val files = File(root, path).listFiles()
+        val file = File(context.filesDir, path)
+        if (file.exists()) {
+            if (file.isDirectory) {
+                file.deleteRecursively()
+            }
+            else {
+                file.delete()
+            }
+        }
+    }
 
-        if (files != null) {
-            for (file in files) {
-                if (file.isFile) {
-                    file.delete()
-                }
-                else if (file.isDirectory) {
-                    file.deleteRecursively()
+    fun clearDir(
+        path: String,
+        context: Context
+    ) {
+        val dir = File(context.filesDir, path)
+        if (dir.exists() && dir.isDirectory) {
+            val files = dir.listFiles()
+            if (files != null) {
+                for (file in files) {
+                    if (file.isFile) {
+                        file.delete()
+                    } else if (file.isDirectory) {
+                        file.deleteRecursively()
+                    }
                 }
             }
         }
