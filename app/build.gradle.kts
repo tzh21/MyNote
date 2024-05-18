@@ -73,6 +73,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
+    implementation ("io.coil-kt:coil-compose:2.2.2")
 
     //Room
     val roomVersion = "2.6.1"
