@@ -74,28 +74,6 @@ object LocalFileApi {
         }
     }
 
-    fun copyFile(
-        from: String, to: String,
-        context: Context
-    ) {
-        val oldFile = File(context.filesDir, from)
-        if (oldFile.exists()) {
-            val newFile = createFile(to, context)
-            oldFile.copyTo(newFile, true)
-        }
-    }
-
-    fun copyDir(
-        from: String, to: String,
-        context: Context
-    ) {
-        val oldDir = File(context.filesDir, from)
-        if (oldDir.exists()) {
-            val newDir = createDir(to, context)
-            oldDir.copyRecursively(newDir, true)
-        }
-    }
-
     fun moveFile(
         from: String, to: String,
         context: Context
@@ -160,12 +138,15 @@ object LocalFileApi {
         context: Context
     ): List<String> {
         val files = File(context.filesDir, path).listFiles()
-        if (files.isEmpty()) {
-            return listOf("本目录为空")
+        if (files != null) {
+            if (files.isEmpty()) {
+                return listOf("本目录为空")
+            }
         }
         return files?.map { it.name } ?: listOf("本目录为空")
     }
 
+//    删除文件或目录
     fun deleteFile(
         path: String,
         context: Context
@@ -181,22 +162,7 @@ object LocalFileApi {
         }
     }
 
-//    删除目录下的所有文件和文件夹
-    fun deleteDir(
-        path: String,
-        context: Context
-    ) {
-        val file = File(context.filesDir, path)
-        if (file.exists()) {
-            if (file.isDirectory) {
-                file.deleteRecursively()
-            }
-            else {
-                file.delete()
-            }
-        }
-    }
-
+//    清空目录下的文件（不删除目录本身）
     fun clearDir(
         path: String,
         context: Context
@@ -238,21 +204,6 @@ object NoteLoaderApi {
         }
 
         return note
-    }
-
-    //    返回笔记文件的 json 源代码
-    fun loadNoteSource(
-        path: String,
-        context: Context
-    ): String {
-        val file = File(context.filesDir, path)
-        var source = ""
-
-        if (file.exists()) {
-            source = file.readText()
-        }
-
-        return source
     }
 }
 
@@ -310,38 +261,38 @@ object RemoteFileApi {
     }
 }
 
-object LocalFileDebugApi {
-    fun printFileContent(
-        path: String,
-        context: Context,
-    ) {
-        val root = context.filesDir
-        val file = File(root, path)
-        if (file.exists()) {
-            val content = file.readText()
-            Log.d("printFileContent", content)
-        } else {
-            Log.d("printFileContent", "文件不存在")
-        }
-    }
-
-    fun printFilenames(
-        path: String,
-        context: Context,
-    ) {
-        val root = context.filesDir
-        val filesDir = File(root, path)
-        val files = filesDir.listFiles()
-
-        if (files != null) {
-            for (file in files) {
-                Log.d("printFilenames", file.name)
-            }
-        } else {
-            Log.d("printFilenames", "文件目录为空")
-        }
-    }
-}
+//object LocalFileDebugApi {
+//    fun printFileContent(
+//        path: String,
+//        context: Context,
+//    ) {
+//        val root = context.filesDir
+//        val file = File(root, path)
+//        if (file.exists()) {
+//            val content = file.readText()
+//            Log.d("printFileContent", content)
+//        } else {
+//            Log.d("printFileContent", "文件不存在")
+//        }
+//    }
+//
+//    fun printFilenames(
+//        path: String,
+//        context: Context,
+//    ) {
+//        val root = context.filesDir
+//        val filesDir = File(root, path)
+//        val files = filesDir.listFiles()
+//
+//        if (files != null) {
+//            for (file in files) {
+//                Log.d("printFilenames", file.name)
+//            }
+//        } else {
+//            Log.d("printFilenames", "文件目录为空")
+//        }
+//    }
+//}
 
 fun getCurrentTime(): String {
     val currentDateTime = LocalDateTime.now()

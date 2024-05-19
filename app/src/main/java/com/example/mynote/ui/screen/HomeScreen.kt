@@ -2,7 +2,6 @@ package com.example.mynote.ui.screen
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +28,8 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -312,49 +313,85 @@ fun HomeScreen(
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
                     items(noteListState.noteList.size) { index ->
-                        Card(
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                            modifier = Modifier
-                                .clickable {
-                                    navigateToEditorScreen(noteListState.noteList[index].fileName)
-                                }
-                        ) {
-                            Column {
+                        val showOption = remember { mutableStateOf(false) }
+
+                        Box {
+                            Card(
+                                shape = RoundedCornerShape(8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                modifier = Modifier
+//                                    .clickable {
+//                                        navigateToEditorScreen(noteListState.noteList[index].fileName)
+//                                    }
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(
+                                            onTap = {
+                                                navigateToEditorScreen(noteListState.noteList[index].fileName)
+                                            },
+//                                            onPress = {
+//                                                navigateToEditorScreen(noteListState.noteList[index].fileName)
+//                                            },
+                                            onLongPress = {
+                                                showOption.value = true
+                                            }
+                                        )
+                                    }
+                            ) {
+                                Column {
 //                                图片
-                                if (noteListState.noteList[index].coverImage != "") {
-                                    val imagePath = noteListState.noteList[index].coverImage
-                                    val file = File(context.filesDir, imagePath)
-                                    if (file.exists()) {
-                                        val image = file.toUri().toString()
-                                        GlideImage(
-                                            model = image,
-                                            contentDescription = "image",
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .height(140.dp)
+                                    if (noteListState.noteList[index].coverImage != "") {
+                                        val imagePath = noteListState.noteList[index].coverImage
+                                        val file = File(context.filesDir, imagePath)
+                                        if (file.exists()) {
+                                            val image = file.toUri().toString()
+                                            GlideImage(
+                                                model = image,
+                                                contentDescription = "image",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .height(140.dp)
+                                            )
+                                        }
+                                    }
+//                                文本
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(12.dp)
+                                    ) {
+                                        val noteTitle = noteListState.noteList[index].title
+                                        Text(
+                                            text = if (noteTitle == "") "未命名" else noteTitle,
+                                            fontSize = Typography.titleLarge.fontSize,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = noteListState.noteList[index].lastModifiedTime,
+                                            fontSize = Typography.bodyMedium.fontSize,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
-//                                文本
-                                Column(
-                                    modifier = Modifier
-                                        .padding(12.dp)
-                                ) {
-                                    val noteTitle = noteListState.noteList[index].title
-                                    Text(
-                                        text = if (noteTitle == "") "未命名" else noteTitle,
-                                        fontSize = Typography.titleLarge.fontSize,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = noteListState.noteList[index].lastModifiedTime,
-                                        fontSize = Typography.bodyMedium.fontSize,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = showOption.value,
+                                onDismissRequest = { showOption.value = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("删除") },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            viewModel.deleteNote(
+                                                username,
+                                                category,
+                                                noteListState.noteList[index].fileName,
+                                                context
+                                            )
+                                        }
+                                    }
+                                )
                             }
                         }
                     }

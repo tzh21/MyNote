@@ -61,10 +61,6 @@ class EditorViewModel(
         }
     }
 
-    fun changeText(index: Int, text: String) {
-        noteBody[index] = noteBody[index].copy(data = text)
-    }
-
 //    本地保存笔记
     suspend fun saveNote(context: Context) {
         note = Note(
@@ -135,26 +131,37 @@ class EditorViewModel(
 
     var currentBlockIndex = mutableStateOf(0)
 
-    fun saveImage(uri: Uri, context: Context) {
+    fun insertResource(uri: Uri, type: BlockType, context: Context) {
         val currentTime = getCurrentTime()
         val path =
-            "${username.value}/${category.value}/assets/${fileName.value}/image/$currentTime"
+            if (type == BlockType.IMAGE)
+                "${username.value}/${category.value}/assets/${fileName.value}/image/$currentTime"
+            else
+                "${username.value}/${category.value}/assets/${fileName.value}/audio/$currentTime"
         LocalFileApi.saveResource(uri, path, context)
-        noteBody.add(currentBlockIndex.value + 1, Block(BlockType.IMAGE, path))
-        if (noteBody.size <= currentBlockIndex.value + 2) {
-            noteBody.add(currentBlockIndex.value + 2, Block(BlockType.BODY, ""))
+
+        var insertIndex = currentBlockIndex.value + 1
+//        当前文本块为空时，插入图片到当前文本块
+        if (noteBody[currentBlockIndex.value].type == BlockType.BODY && noteBody[currentBlockIndex.value].data.isEmpty()) {
+            insertIndex = currentBlockIndex.value
+            noteBody[insertIndex] = Block(type, path)
+        }
+        else {
+            noteBody.add(insertIndex, Block(type, path))
+        }
+
+//        在末尾插入空文本块
+        if (noteBody.size <= insertIndex + 1) {
+            noteBody.add(insertIndex + 1, Block(BlockType.BODY, ""))
         }
     }
 
-    fun saveAudio(uri: Uri, context: Context) {
-        val currentTime = getCurrentTime()
-        val path =
-            "${username.value}/${category.value}/assets/${fileName.value}/audio/$currentTime"
-        LocalFileApi.saveResource(uri, path, context)
-        noteBody.add(currentBlockIndex.value + 1, Block(BlockType.AUDIO, path))
-        if (noteBody.size <= currentBlockIndex.value + 2) {
-            noteBody.add(currentBlockIndex.value + 2, Block(BlockType.BODY, ""))
-        }
+    fun insertImage(uri: Uri, context: Context) {
+        insertResource(uri, BlockType.IMAGE, context)
+    }
+
+    fun insertAudio(uri: Uri, context: Context) {
+        insertResource(uri, BlockType.AUDIO, context)
     }
 
     var currentAudioUri = mutableStateOf(Uri.EMPTY)

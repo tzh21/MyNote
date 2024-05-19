@@ -207,6 +207,22 @@ class HomeViewModel(
         selectedCategoryIndex.intValue = categoryList.indexOf(category)
     }
 
+    fun deleteNote(
+        username: String,
+        category: String,
+        fileName: String,
+        context: Context
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+//            删除数据库中的笔记
+            noteDao.deleteNote(username, category, fileName)
+//            删除笔记文件
+            LocalFileApi.deleteFile("$username/$category/$fileName", context)
+//            删除依赖文件
+            LocalFileApi.deleteFile("$username/$category/assets/$fileName", context)
+        }
+    }
+
     companion object {
         private const val TIMEOUT_MILLIS = 50_000L
     }

@@ -14,7 +14,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -95,7 +94,7 @@ data object EditorRoute {
     const val complete = "$base/{$username}/{$category}/{$noteTitle}"
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditorScreen(
     navigateToHome: () -> Unit,
@@ -207,19 +206,19 @@ fun EditorScreen(
                         .padding(bottom = 6.dp)
                 ) {
                     CameraButton { uri ->
-                        viewModel.saveImage(uri, context)
+                        viewModel.insertImage(uri, context)
                     }
 
                     ImagePickerButton { uri ->
-                        viewModel.saveImage(uri, context)
+                        viewModel.insertImage(uri, context)
                     }
 
                     AudioRecorderButton { uri ->
-                        viewModel.saveAudio(uri, context)
+                        viewModel.insertAudio(uri, context)
                     }
 
                     AudioPickerButton { uri ->
-                        viewModel.saveAudio(uri, context)
+                        viewModel.insertAudio(uri, context)
                     }
                 }
             }
@@ -286,7 +285,7 @@ fun EditorScreen(
                                 BasicTextField(
                                     value = viewModel.noteBody[index].data,
                                     onValueChange = { newText ->
-                                        viewModel.changeText(index, newText)
+                                        viewModel.noteBody[index] = viewModel.noteBody[index].copy(data = newText)
                                     },
                                     textStyle = TextStyle(
                                         fontSize = normalTextSize,
@@ -333,7 +332,7 @@ fun EditorScreen(
                                 ImageBlock(
                                     imageUri = uri,
                                     removeBlock = {
-                                        removeAndCat(viewModel.noteBody, index, context)
+                                        removeBlock(viewModel.noteBody, index, context)
                                     },
                                 )
                             }
@@ -346,7 +345,7 @@ fun EditorScreen(
                                 AudioBlock(
                                     isPlaying,
                                     removeBlock = {
-                                        removeAndCat(viewModel.noteBody, index, context)
+                                        removeBlock(viewModel.noteBody, index, context)
                                     },
                                     playAudio = {
                                         viewModel.playOrPauseAudio(uri)
@@ -405,8 +404,6 @@ fun ImageBlock(
 
 @Composable
 fun AudioBlock(
-//    audioUri: String,
-//    player: ExoPlayer,
     isPlaying: Boolean,
     removeBlock: () -> Unit = {},
     playAudio: () -> Unit = {}
@@ -602,7 +599,7 @@ fun AudioRecorderButton(
 }
 
 
-fun removeAndCat(
+fun removeBlock(
     blockList: SnapshotStateList<Block>,
     index: Int,
     context: Context
