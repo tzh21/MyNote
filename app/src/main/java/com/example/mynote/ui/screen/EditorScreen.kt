@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,12 +13,18 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,6 +39,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -45,9 +51,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,11 +66,11 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.LineBreak
@@ -96,7 +100,7 @@ data object EditorRoute {
     const val complete = "$base/{$username}/{$category}/{$noteTitle}"
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditorScreen(
     navigateToHome: () -> Unit,
@@ -115,6 +119,7 @@ fun EditorScreen(
     viewModel.loadNote(context)
     viewModel.initExoPlayer(context)
 
+//    退出时保存笔记
     BackHandler {
         coroutineScope.launch {
             viewModel.saveNote(context)
@@ -195,8 +200,37 @@ fun EditorScreen(
                     }
                 }
             )
-        }
-    ) { paddingValues ->
+        },
+        bottomBar = {
+            Column {
+                Divider(thickness = 1.dp, color = Color.LightGray)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp)
+                        .padding(bottom = 6.dp)
+                ) {
+                    CameraButton { uri ->
+                        viewModel.saveImage(uri, context)
+                    }
+
+                    ImagePickerButton { uri ->
+                        viewModel.saveImage(uri, context)
+                    }
+
+                    AudioRecorderButton { uri ->
+                        viewModel.saveAudio(uri, context)
+                    }
+
+                    AudioPickerButton { uri ->
+                        viewModel.saveAudio(uri, context)
+                    }
+                }
+            }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { scaffoldPadding ->
         val focusManager = LocalFocusManager.current
         Box(
             modifier = Modifier
@@ -205,33 +239,16 @@ fun EditorScreen(
                         focusManager.clearFocus()
                     }
                 }
-                .padding(paddingValues)
+                .padding(scaffoldPadding)
+                .consumeWindowInsets(scaffoldPadding)
+                .systemBarsPadding()
         ) {
-            Column {
-//                监听键盘状态，以确保底部按钮不被键盘遮挡
-                val view = LocalView.current
-                val density = LocalDensity.current
-                val isImeVisible = remember { mutableStateOf(false) }
-                val keypadHeightPx = remember { mutableIntStateOf(0) }
-                DisposableEffect(view) {
-                    val onGlobalListener = ViewTreeObserver.OnGlobalLayoutListener {
-                        val rect = android.graphics.Rect()
-                        view.getWindowVisibleDisplayFrame(rect)
-                        val screenHeight = view.rootView.height
-                        keypadHeightPx.intValue = screenHeight - rect.bottom
-                        isImeVisible.value = keypadHeightPx.intValue > screenHeight * 0.15
-                    }
-                    view.viewTreeObserver.addOnGlobalLayoutListener(onGlobalListener)
-
-                    onDispose {
-                        view.viewTreeObserver.removeOnGlobalLayoutListener(onGlobalListener)
-                    }
-                }
-
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
                 LazyColumn(
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
-                        .weight(1f)
                 ) {
 //                    标题栏
                     item {
@@ -289,6 +306,7 @@ fun EditorScreen(
                                     ),
                                     keyboardActions = KeyboardActions(
                                         onNext = {
+                                            viewModel.noteBody.add(index + 1, Block(BlockType.BODY, ""))
                                             focusManager.moveFocus(FocusDirection.Down)
                                         }
                                     ),
@@ -324,7 +342,7 @@ fun EditorScreen(
                                     imageUri = uri,
                                     removeBlock = {
                                         removeAndCat(viewModel.noteBody, index, context)
-                                    }
+                                    },
                                 )
                             }
 
@@ -342,32 +360,6 @@ fun EditorScreen(
                         }
                     }
                 }
-                Column {
-                    Divider(modifier = Modifier.height(1.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .padding(top = 8.dp)
-                            .padding(bottom = with(density) { keypadHeightPx.intValue.toDp() + 6.dp })
-                    ) {
-                        CameraButton { uri ->
-                            viewModel.saveImage(uri, context)
-                        }
-
-                        ImagePickerButton { uri ->
-                            viewModel.saveImage(uri, context)
-                        }
-
-                        AudioRecorderButton { uri ->
-                            viewModel.saveAudio(uri, context)
-                        }
-
-                        AudioPickerButton { uri ->
-                            viewModel.saveAudio(uri, context)
-                        }
-                    }
-                }
             }
         }
     }
@@ -382,38 +374,33 @@ fun ImageBlock(
     var showOption by rememberSaveable {
         mutableStateOf(false)
     }
-    var pressOffset by remember {
-        mutableStateOf(DpOffset.Zero)
-    }
-    var itemHeight by remember {
-        mutableStateOf(0.dp)
-    }
-    val density = LocalDensity.current
 
-    Box {
-        GlideImage(
-            model = imageUri,
-            contentDescription = "It is an image.",
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .size(200.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            showOption = true
-                            pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
-                        }
-                    )
-                }
-                .onSizeChanged {
-                    itemHeight = with(density) { it.height.toDp() }
-                }
-        )
+    Box(
+        modifier = Modifier.padding(bottom = 8.dp)
+    ) {
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            GlideImage(
+                model = imageUri,
+                contentDescription = "It is an image.",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onLongPress = {
+                                showOption = true
+                            }
+                        )
+                    }
+            )
+        }
 
         DropdownMenu(
             expanded = showOption,
-            offset = pressOffset.copy(y = pressOffset.y - itemHeight),
-            onDismissRequest = { showOption = false },
+            onDismissRequest = { showOption = false }
         ) {
             DropdownMenuItem(text = { Text("删除") }, onClick = { removeBlock() })
         }
@@ -615,17 +602,6 @@ fun removeAndCat(
     context: Context
 ) {
     val imagePath = blockList[index].data
-    if (
-        index + 1 < blockList.size &&
-        blockList[index + 1].type == BlockType.BODY &&
-        index - 1 >= 0 &&
-        blockList[index - 1].type == BlockType.BODY
-    ) {
-        val previousBlock = blockList[index - 1].data
-        val nextBlock = blockList[index + 1].data
-        blockList[index - 1] = blockList[index - 1].copy(data = previousBlock + "\n" + nextBlock)
-        blockList.removeAt(index + 1)
-    }
     blockList.removeAt(index)
     LocalFileApi.deleteFile(imagePath, context)
 }
