@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.view.ViewTreeObserver
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -113,6 +114,13 @@ fun EditorScreen(
     viewModel.fileName.value = fileName
     viewModel.loadNote(context)
     viewModel.initExoPlayer(context)
+
+    BackHandler {
+        coroutineScope.launch {
+            viewModel.saveNote(context)
+            navigateToHome()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -281,7 +289,6 @@ fun EditorScreen(
                                     ),
                                     keyboardActions = KeyboardActions(
                                         onNext = {
-//                                            viewModel.noteBody.add(index + 1, Block(BlockType.BODY, ""))
                                             focusManager.moveFocus(FocusDirection.Down)
                                         }
                                     ),
@@ -335,35 +342,29 @@ fun EditorScreen(
                         }
                     }
                 }
-                if (isImeVisible.value) {
-                    Column {
-                        Divider(modifier = Modifier.height(1.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .padding(top = 8.dp)
-                                .padding(bottom = with(density) { keypadHeightPx.intValue.toDp() + 6.dp })
-                        ) {
-                            CameraButton { uri ->
-                                coroutineScope.launch {
-                                    viewModel.saveImage(uri, context)
-                                }
-                            }
+                Column {
+                    Divider(modifier = Modifier.height(1.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 8.dp)
+                            .padding(bottom = with(density) { keypadHeightPx.intValue.toDp() + 6.dp })
+                    ) {
+                        CameraButton { uri ->
+                            viewModel.saveImage(uri, context)
+                        }
 
-                            ImagePickerButton { uri ->
-                                coroutineScope.launch {
-                                    viewModel.saveImage(uri, context)
-                                }
-                            }
+                        ImagePickerButton { uri ->
+                            viewModel.saveImage(uri, context)
+                        }
 
-                            AudioRecorderButton { uri ->
-                                viewModel.saveAudio(uri, context)
-                            }
+                        AudioRecorderButton { uri ->
+                            viewModel.saveAudio(uri, context)
+                        }
 
-                            AudioPickerButton { uri ->
-                                viewModel.saveAudio(uri, context)
-                            }
+                        AudioPickerButton { uri ->
+                            viewModel.saveAudio(uri, context)
                         }
                     }
                 }
