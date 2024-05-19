@@ -107,6 +107,7 @@ object LocalFileApi {
             stream.write(jsonString.toByteArray())
         }
     }
+
     fun saveResource(
         uri: Uri, path: String, context: Context
     ) {
@@ -208,7 +209,7 @@ object NoteLoaderApi {
 }
 
 object RemoteFileApi {
-//    上传单个笔记以及其饮用的资源文件（如图片、音频）
+//    上传单个笔记以及其使用的资源文件（如图片、音频）
     suspend fun uploadNote(
         path: String,
         context: Context,

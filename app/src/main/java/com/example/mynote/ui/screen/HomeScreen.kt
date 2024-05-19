@@ -21,7 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Logout
@@ -122,18 +122,43 @@ fun HomeScreen(
                     Row(
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
-                        IconButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    viewModel.download(context)
-                                }
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDownload,
-                                contentDescription = "Download",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                        Box {
+                            val showSyncMenu = remember {
+                                mutableStateOf(false)
+                            }
+
+                            IconButton(onClick = {
+                                showSyncMenu.value = true
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Cloud,
+                                    contentDescription = "Cloud sync",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = showSyncMenu.value,
+                                onDismissRequest = { showSyncMenu.value = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(text = "上传全部笔记") },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            viewModel.uploadAll(context)
+                                        }
+                                    }
+                                )
+
+                                DropdownMenuItem(
+                                    text = { Text(text = "下载全部笔记") },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            viewModel.download(context)
+                                        }
+                                    }
+                                )
+                            }
                         }
 
                         IconButton(onClick = { navigateToCategory() }) {

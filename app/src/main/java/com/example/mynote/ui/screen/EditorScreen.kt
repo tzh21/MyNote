@@ -598,7 +598,6 @@ fun AudioRecorderButton(
     }
 }
 
-
 fun removeBlock(
     blockList: SnapshotStateList<Block>,
     index: Int,

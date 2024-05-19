@@ -14,7 +14,10 @@ interface NoteDao {
     fun getAllNotesInCategory(username: String, category: String): Flow<List<NoteEntity>>
 
     @Query("SELECT * FROM notes WHERE username = :username ORDER BY lastModifiedTime DESC")
-    fun getAllNotes(username: String): Flow<List<NoteEntity>>
+    fun getAllNotesFlow(username: String): Flow<List<NoteEntity>>
+
+    @Query("SELECT * FROM notes WHERE username = :username ORDER BY lastModifiedTime DESC")
+    fun getAllNotes(username: String): List<NoteEntity>
 
     @Query("SELECT * FROM notes WHERE username = :username AND category = :category AND fileName = :fileName")
     fun getNoteByName(username: String, category: String, fileName: String): Flow<NoteEntity>

@@ -14,6 +14,7 @@ import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
 import com.example.mynote.data.NoteLoaderApi
+import com.example.mynote.data.RemoteFileApi
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.network.ErrorResponse
 import com.example.mynote.network.MyNoteApiService
@@ -52,7 +53,7 @@ class HomeViewModel(
 
     fun initialQueryNoteList() {
         if (!::queryNoteListStateFlow.isInitialized) {
-            queryNoteListStateFlow = noteDao.getAllNotes(username.value).map { NoteListUiState(it) }
+            queryNoteListStateFlow = noteDao.getAllNotesFlow(username.value).map { NoteListUiState(it) }
                 .stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
@@ -189,6 +190,25 @@ class HomeViewModel(
                 }
 
                 Log.d("HomeViewModel", errorDetail)
+            }
+
+            showSyncDialog.value = false
+        }
+    }
+
+    suspend fun uploadAll(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            showSyncDialog.value = true
+
+            val noteList = noteDao.getAllNotes(username.value)
+            for (note in noteList) {
+                val filePath = "${username.value}/${note.category}/${note.fileName}"
+                RemoteFileApi.uploadNote(
+                    filePath,
+                    context,
+                    viewModelScope,
+                    apiService
+                )
             }
 
             showSyncDialog.value = false
