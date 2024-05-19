@@ -9,19 +9,13 @@ import android.provider.MediaStore
 import android.view.ViewTreeObserver
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,18 +23,17 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,7 +67,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.DpOffset
@@ -90,10 +82,6 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
 import com.example.mynote.data.LocalFileApi
-import com.example.mynote.data.NoteLoaderApi
-import com.example.mynote.data.getCurrentTime
-import com.example.mynote.ui.theme.DarkColorScheme
-import com.example.mynote.ui.theme.LightColorScheme
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
@@ -212,7 +200,6 @@ fun EditorScreen(
                 .padding(paddingValues)
         ) {
             Column {
-
 //                监听键盘状态，以确保底部按钮不被键盘遮挡
                 val view = LocalView.current
                 val density = LocalDensity.current
@@ -223,8 +210,8 @@ fun EditorScreen(
                         val rect = android.graphics.Rect()
                         view.getWindowVisibleDisplayFrame(rect)
                         val screenHeight = view.rootView.height
-                        keypadHeightPx.value = screenHeight - rect.bottom
-                        isImeVisible.value = keypadHeightPx.value > screenHeight * 0.15
+                        keypadHeightPx.intValue = screenHeight - rect.bottom
+                        isImeVisible.value = keypadHeightPx.intValue > screenHeight * 0.15
                     }
                     view.viewTreeObserver.addOnGlobalLayoutListener(onGlobalListener)
 
@@ -232,10 +219,6 @@ fun EditorScreen(
                         view.viewTreeObserver.removeOnGlobalLayoutListener(onGlobalListener)
                     }
                 }
-
-//                var currentBlockIndex = remember {
-//                    mutableStateOf(0)
-//                }
 
                 LazyColumn(
                     modifier = Modifier
@@ -298,7 +281,7 @@ fun EditorScreen(
                                     ),
                                     keyboardActions = KeyboardActions(
                                         onNext = {
-                                            viewModel.noteBody.add(index + 1, Block(BlockType.BODY, ""))
+//                                            viewModel.noteBody.add(index + 1, Block(BlockType.BODY, ""))
                                             focusManager.moveFocus(FocusDirection.Down)
                                         }
                                     ),
@@ -314,6 +297,14 @@ fun EditorScreen(
                                         .onFocusChanged { focusState ->
                                             if (focusState.isFocused) {
                                                 viewModel.currentBlockIndex.value = index
+                                                if (index == viewModel.noteBody.size - 1) {
+                                                    viewModel.noteBody.add(
+                                                        Block(
+                                                            BlockType.BODY,
+                                                            ""
+                                                        )
+                                                    )
+                                                }
                                             }
                                         }
                                 )
@@ -344,63 +335,42 @@ fun EditorScreen(
                         }
                     }
                 }
-                Row(
-                    modifier = Modifier
-                        .padding(
-                            start = 16.dp,
-                            end = 16.dp,
-                            bottom = if (isImeVisible.value) with(density) { keypadHeightPx.value.toDp() + 16.dp } else 16.dp,
-                        )
-                ) {
-                    CameraButton { uri ->
-                        coroutineScope.launch {
-                            viewModel.saveImage(uri, context)
+                if (isImeVisible.value) {
+                    Column {
+                        Divider(modifier = Modifier.height(1.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 8.dp)
+                                .padding(bottom = with(density) { keypadHeightPx.intValue.toDp() + 6.dp })
+                        ) {
+                            CameraButton { uri ->
+                                coroutineScope.launch {
+                                    viewModel.saveImage(uri, context)
+                                }
+                            }
+
+                            ImagePickerButton { uri ->
+                                coroutineScope.launch {
+                                    viewModel.saveImage(uri, context)
+                                }
+                            }
+
+                            AudioRecorderButton { uri ->
+                                viewModel.saveAudio(uri, context)
+                            }
+
+                            AudioPickerButton { uri ->
+                                viewModel.saveAudio(uri, context)
+                            }
                         }
-                    }
-
-                    ImagePickerButton { uri ->
-                        coroutineScope.launch {
-                            viewModel.saveImage(uri, context)
-                        }
-                    }
-
-                    AudioRecorderButton { uri ->
-                        viewModel.saveAudio(uri, context)
-                    }
-
-                    AudioPickerButton { uri ->
-                        viewModel.saveAudio(uri, context)
                     }
                 }
             }
         }
     }
 }
-
-//fun saveImage(
-//    username: String,
-//    category: String,
-//    fileName: String,
-//    noteBody: SnapshotStateList<Block>,
-//    uri: Uri,
-//    currentBlockIndex: Int,
-//    context: Context
-//) {
-//    val currentTime = getCurrentTime()
-//    val path =
-//        "$username/$category/assets/$fileName/image/$currentTime"
-//    LocalFileApi.saveResource(uri, path, context)
-//    noteBody.add(currentBlockIndex + 1, Block(BlockType.IMAGE, path))
-//    if (noteBody.size <= currentBlockIndex + 2) {
-//        noteBody.add(currentBlockIndex + 2, Block(BlockType.BODY, ""))
-//    }
-//}
-
-//isError = true, // 展示错误提示
-//keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), // 将键盘的回车键定义为搜索
-//给回车键定义点击搜索事件，弹出搜索内容
-//keyboardActions = KeyboardActions(onSearch = { Toast.makeText(context, "search $text", Toast.LENGTH_SHORT).show() })
-//singleLine = true // 重新定义回车键，一定要定义为单行，否则回车键还是换行，重定义不生效
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable

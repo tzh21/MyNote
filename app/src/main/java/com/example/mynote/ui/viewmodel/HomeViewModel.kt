@@ -78,7 +78,7 @@ class HomeViewModel(
 //        文件系统中创建文件
         val note = Note(
             title = "",
-            body = listOf(Block(type = BlockType.BODY, data = ""), Block(type = BlockType.BODY, data = ""))
+            body = listOf(Block(type = BlockType.BODY, data = ""))
         )
         LocalFileApi.saveNote(
             "${username.value}/${category.value}/$fileName",
@@ -204,7 +204,7 @@ class HomeViewModel(
     }
 
     fun initSelectedCategoryIndex(category: String) {
-        selectedCategoryIndex.value = categoryList.indexOf(category)
+        selectedCategoryIndex.intValue = categoryList.indexOf(category)
     }
 
     companion object {

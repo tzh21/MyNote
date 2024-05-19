@@ -2,7 +2,6 @@ package com.example.mynote.ui.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -73,13 +72,21 @@ class EditorViewModel(
         )
 //        更新到文件系统
         LocalFileApi.saveNote("${username.value}/${category.value}/${fileName.value}", note, context)
+
+//        更新封面图片
+        var coverImage = ""
+        for (block in noteBody) {
+            if (block.type == BlockType.IMAGE) {
+                coverImage = block.data
+                break
+            }
+        }
+
 //        更新到数据库
-//    coverageImage: 3/default/assets/2024-0518-231050/image/2024-0518-231059
-        Log.d("EditorViewModel", "coverageImage: ${coverImage.value}")
         noteDao.update(noteEntity!!.copy(
             category = category.value,
             title = noteTitle.value,
-            coverImage = coverImage.value,
+            coverImage = coverImage,
             lastModifiedTime = getCurrentTime()
         ))
     }
@@ -105,20 +112,6 @@ class EditorViewModel(
 //        保存更改
         saveNote(context)
 
-////        复制笔记
-//        LocalFileApi.copyFile(
-//            "${username.value}/${category.value}/${fileName.value}",
-//            "${username.value}/${newCategory}/${fileName.value}",
-//            context
-//        )
-//
-////        复制资源文件
-//        LocalFileApi.copyDir(
-//            "${username.value}/${category.value}/assets/${fileName.value}",
-//            "${username.value}/${newCategory}/assets/${fileName.value}",
-//            context
-//        )
-
         LocalFileApi.moveFile(
             "${username.value}/${category.value}/${fileName.value}",
             "${username.value}/${newCategory}/${fileName.value}",
@@ -137,17 +130,9 @@ class EditorViewModel(
             category = newCategory,
             lastModifiedTime = currentTime
         ))
-
-////        删除旧笔记
-//        LocalFileApi.deleteFile("${username.value}/${category.value}/${fileName.value}", context)
-//
-////        删除旧资源
-//        LocalFileApi.deleteDir("${username.value}/${category.value}/assets/${fileName.value}", context)
     }
 
-
     var currentBlockIndex = mutableStateOf(0)
-    var coverImage = mutableStateOf("")
 
     fun saveImage(uri: Uri, context: Context) {
         val currentTime = getCurrentTime()
@@ -158,9 +143,6 @@ class EditorViewModel(
         if (noteBody.size <= currentBlockIndex.value + 2) {
             noteBody.add(currentBlockIndex.value + 2, Block(BlockType.BODY, ""))
         }
-
-//        更新数据库中笔记的封面图片
-        coverImage.value = path
     }
 
     fun saveAudio(uri: Uri, context: Context) {
