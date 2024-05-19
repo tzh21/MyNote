@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
@@ -153,6 +154,24 @@ class EditorViewModel(
         noteBody.add(currentBlockIndex.value + 1, Block(BlockType.AUDIO, path))
         if (noteBody.size <= currentBlockIndex.value + 2) {
             noteBody.add(currentBlockIndex.value + 2, Block(BlockType.BODY, ""))
+        }
+    }
+
+    var currentAudioUri = mutableStateOf(Uri.EMPTY)
+    var isPlaying = mutableStateOf(false)
+
+    fun playOrPauseAudio(audioUri: Uri) {
+        if (player.isPlaying && currentAudioUri.value == audioUri) {
+            player.pause()
+            isPlaying.value = false
+        }
+        else {
+            currentAudioUri.value = audioUri
+            val mediaItem = MediaItem.fromUri(audioUri)
+            player.setMediaItem(mediaItem)
+            player.prepare()
+            player.play()
+            isPlaying.value = true
         }
     }
 }

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,13 +29,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -64,21 +67,16 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.LineBreak
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.example.mynote.data.Block
@@ -342,12 +340,16 @@ fun EditorScreen(
 
                             BlockType.AUDIO -> {
                                 val path = viewModel.noteBody[index].data
-                                val uri = File(context.filesDir, path).toUri().toString()
+                                val uri = File(context.filesDir, path).toUri()
+                                val isPlaying = (viewModel.isPlaying.value && viewModel.currentAudioUri.value == uri)
+                                Log.d("AudioBlock", "isPlaying: $isPlaying")
                                 AudioBlock(
-                                    audioUri = uri,
-                                    viewModel.player,
+                                    isPlaying,
                                     removeBlock = {
                                         removeAndCat(viewModel.noteBody, index, context)
+                                    },
+                                    playAudio = {
+                                        viewModel.playOrPauseAudio(uri)
                                     }
                                 )
                             }
@@ -403,58 +405,68 @@ fun ImageBlock(
 
 @Composable
 fun AudioBlock(
-    audioUri: String,
-    player: ExoPlayer,
-    removeBlock: () -> Unit = {}
+//    audioUri: String,
+//    player: ExoPlayer,
+    isPlaying: Boolean,
+    removeBlock: () -> Unit = {},
+    playAudio: () -> Unit = {}
 ) {
     var showOption by rememberSaveable {
         mutableStateOf(false)
     }
 
-    var pressOffset by remember {
-        mutableStateOf(DpOffset.Zero)
-    }
-
-    var itemHeight by remember {
-        mutableStateOf(0.dp)
-    }
-
-    val density = LocalDensity.current
-
-    Box {
+    Box(
+        modifier = Modifier.padding(bottom = 8.dp)
+    ) {
         Card(
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
             modifier = Modifier
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = {
                             showOption = true
-                            pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
                         }
                     )
                 }
-                .onSizeChanged {
-                    itemHeight = with(density) { it.height.toDp() }
-                }
+                .height(48.dp)
+                .fillMaxWidth()
         ) {
-            Row {
-                Button(onClick = {
-                    val mediaItem = MediaItem.fromUri(audioUri)
-                    if (player.isPlaying) {
-                        player.pause()
-                    } else {
-                        player.setMediaItem(mediaItem)
-                        player.prepare()
-                        player.play()
-                    }
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(vertical = 8.dp),
+            ) {
+                IconButton(onClick = {
+                    playAudio()
                 }) {
-                    Text("播放/暂停")
+                    if (isPlaying) {
+                        Icon(
+                            imageVector = Icons.Default.PauseCircleOutline,
+                            contentDescription = "play the audio",
+                        )
+                    }
+                    else {
+                        Icon(
+                            imageVector = Icons.Default.PlayCircleOutline,
+                            contentDescription = "pause the audio",
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = {
+                    removeBlock()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete audio"
+                    )
                 }
             }
         }
 
         DropdownMenu(
             expanded = showOption,
-            offset = pressOffset.copy(y = pressOffset.y - itemHeight),
             onDismissRequest = { showOption = false },
         ) {
             DropdownMenuItem(text = { Text("删除") }, onClick = { removeBlock() })
