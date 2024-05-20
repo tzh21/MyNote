@@ -64,6 +64,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
@@ -368,7 +369,7 @@ fun HomeScreen(
 //                                图片
                                     if (noteListState.noteList[index].coverImage != "") {
                                         val imagePath = noteListState.noteList[index].coverImage
-                                        val file = File(context.filesDir, imagePath)
+                                        val file = LocalNoteFileApi.loadFile(imagePath, context)
                                         if (file.exists()) {
                                             val image = file.toUri().toString()
                                             GlideImage(

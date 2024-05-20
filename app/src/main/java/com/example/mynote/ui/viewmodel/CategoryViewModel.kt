@@ -4,8 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.toMutableStateList
-import com.example.mynote.data.LocalFileApi
+import com.example.mynote.data.LocalNoteFileApi
 
 class CategoryViewModel: ViewModel() {
     var username = mutableStateOf("null")
@@ -20,7 +19,7 @@ class CategoryViewModel: ViewModel() {
 
     fun setDirs(context: Context) {
         dirs.clear()
-        dirs.addAll(LocalFileApi.listDirs(username.value, context))
+        dirs.addAll(LocalNoteFileApi.listDirs(username.value, context))
     }
 
     var showDialog = mutableStateOf(false)

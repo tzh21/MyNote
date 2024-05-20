@@ -36,12 +36,17 @@ data class Note(
     val body: List<Block>
 )
 
-//本地文件相关操作
-object LocalFileApi {
+//笔记文件的根路径
+const val noteBase = "note"
+
+//本地笔记文件相关操作
+//参数路径为笔记文件系统中的相对路径，以 username 为根目录
+//会在路径前加上 context.filesDir 和 noteBase
+object LocalNoteFileApi {
     fun createFile(
         path: String, context: Context
     ): File {
-        val file = File(context.filesDir, path)
+        val file = File(context.filesDir, "$noteBase/$path")
 
         if (!file.exists()) {
             val dir = File(file.parent ?: "")
@@ -57,7 +62,7 @@ object LocalFileApi {
     fun createDir(
         path: String, context: Context
     ): File {
-        val dir = File(context.filesDir, path)
+        val dir = File(context.filesDir, "$noteBase/$path")
         if (!dir.exists()) {
             dir.mkdirs()
         }
@@ -78,7 +83,7 @@ object LocalFileApi {
         from: String, to: String,
         context: Context
     ) {
-        val oldFile = File(context.filesDir, from)
+        val oldFile = File(context.filesDir, "$noteBase/$from")
         if (oldFile.exists()) {
             val newFile = createFile(to, context)
             oldFile.renameTo(newFile)
@@ -89,7 +94,7 @@ object LocalFileApi {
         from: String, to: String,
         context: Context
     ) {
-        val oldDir = File(context.filesDir, from)
+        val oldDir = File(context.filesDir, "$noteBase/$from")
         if (oldDir.exists()) {
             val newDir = createDir(to, context)
             oldDir.renameTo(newDir)
@@ -127,7 +132,7 @@ object LocalFileApi {
         path: String,
         context: Context,
     ): List<String> {
-        val dirs = File(context.filesDir, path).listFiles()
+        val dirs = File(context.filesDir, "$noteBase/$path").listFiles()
         val dirNames = dirs?.filter { it.isDirectory }?.map { it.name } ?: listOf()
 
         return dirNames
@@ -138,7 +143,7 @@ object LocalFileApi {
         path: String,
         context: Context
     ): List<String> {
-        val files = File(context.filesDir, path).listFiles()
+        val files = File(context.filesDir, "$noteBase/$path").listFiles()
         if (files != null) {
             if (files.isEmpty()) {
                 return listOf("本目录为空")
@@ -152,7 +157,7 @@ object LocalFileApi {
         path: String,
         context: Context
     ) {
-        val file = File(context.filesDir, path)
+        val file = File(context.filesDir, "$noteBase/$path")
         if (file.exists()) {
             if (file.isFile) {
                 file.delete()
@@ -168,7 +173,7 @@ object LocalFileApi {
         path: String,
         context: Context
     ) {
-        val dir = File(context.filesDir, path)
+        val dir = File(context.filesDir, "$noteBase/$path")
         if (dir.exists() && dir.isDirectory) {
             val files = dir.listFiles()
             if (files != null) {
@@ -182,6 +187,10 @@ object LocalFileApi {
             }
         }
     }
+
+    fun loadFile(path: String, context: Context): File {
+        return File(context.filesDir, "$noteBase/$path")
+    }
 }
 
 object NoteLoaderApi {
@@ -190,7 +199,7 @@ object NoteLoaderApi {
         path: String,
         context: Context
     ): Note {
-        val file = File(context.filesDir, path)
+        val file = LocalNoteFileApi.loadFile(path, context)
         Log.d("loadNote", path)
         var note = Note(
             title = "未命名",
@@ -208,6 +217,8 @@ object NoteLoaderApi {
     }
 }
 
+//远程笔记文件相关操作
+//和服务器通信中使用的 path 是相对路径，不包含 noteBase 和 filesDir
 object RemoteFileApi {
 //    上传单个笔记以及其使用的资源文件（如图片、音频）
     suspend fun uploadNote(
@@ -218,7 +229,7 @@ object RemoteFileApi {
     ) {
         coroutineScope.launch {
 //            上传笔记文件
-            val file = File(context.filesDir, path)
+            val file = LocalNoteFileApi.loadFile(path, context)
             val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
             val formData = MultipartBody.Part.createFormData("file", file.name, requestFile)
             val response = apiService.upload(path, formData)
@@ -240,7 +251,7 @@ object RemoteFileApi {
             for (block in note.body) {
                 if (block.type == BlockType.IMAGE || block.type == BlockType.AUDIO) {
                     val resourcePath = block.data
-                    val resourceFile = File(context.filesDir, resourcePath)
+                    val resourceFile = LocalNoteFileApi.loadFile(resourcePath, context)
                     val resourceRequestFile = resourceFile.asRequestBody("multipart/form-data".toMediaTypeOrNull())
                     val resourceFormData = MultipartBody.Part.createFormData("file", resourceFile.name, resourceRequestFile)
                     val resourceResponse = apiService.upload(resourcePath, resourceFormData)

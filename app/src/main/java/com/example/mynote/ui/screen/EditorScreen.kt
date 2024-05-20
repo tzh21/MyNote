@@ -80,7 +80,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
-import com.example.mynote.data.LocalFileApi
+import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
@@ -328,7 +328,7 @@ fun EditorScreen(
 
                             BlockType.IMAGE -> {
                                 val path = viewModel.noteBody[index].data
-                                val uri = File(context.filesDir, path).toUri().toString()
+                                val uri = LocalNoteFileApi.loadFile(path, context).toUri().toString()
                                 ImageBlock(
                                     imageUri = uri,
                                     removeBlock = {
@@ -339,7 +339,7 @@ fun EditorScreen(
 
                             BlockType.AUDIO -> {
                                 val path = viewModel.noteBody[index].data
-                                val uri = File(context.filesDir, path).toUri()
+                                val uri = LocalNoteFileApi.loadFile(path, context).toUri()
                                 val isPlaying = (viewModel.isPlaying.value && viewModel.currentAudioUri.value == uri)
                                 Log.d("AudioBlock", "isPlaying: $isPlaying")
                                 AudioBlock(
@@ -605,7 +605,7 @@ fun removeBlock(
 ) {
     val imagePath = blockList[index].data
     blockList.removeAt(index)
-    LocalFileApi.deleteFile(imagePath, context)
+    LocalNoteFileApi.deleteFile(imagePath, context)
 }
 
 // 后续考虑使用的富文本编辑器，暂时不用删
