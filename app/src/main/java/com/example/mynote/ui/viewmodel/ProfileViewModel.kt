@@ -17,7 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -31,7 +30,7 @@ class ProfileViewModel(
         private const val TIMEOUT_MILLIS = 50_000L
     }
 
-    lateinit var profileStateFlow: StateFlow<ProfileState>
+    lateinit var profileStateFlow: StateFlow<ProfileEntity>
 
     var username = mutableStateOf("")
 
@@ -39,11 +38,11 @@ class ProfileViewModel(
         if (!::profileStateFlow.isInitialized) {
             profileStateFlow = noteDao.getProfile(username.value)
                 .filterNotNull()
-                .map { ProfileState(it) }
+//                .map { ProfileState(it) }
                 .stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
-                    initialValue = ProfileState()
+                    initialValue = ProfileEntity()
                 )
         }
     }
@@ -135,7 +134,3 @@ class ProfileViewModel(
         }
     }
 }
-
-data class ProfileState(
-    val profile: ProfileEntity = ProfileEntity()
-)
