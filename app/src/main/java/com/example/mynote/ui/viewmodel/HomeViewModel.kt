@@ -138,9 +138,10 @@ class HomeViewModel(
                                 val resourcePath = block.data
                                 val resourceResponse = apiService.download(resourcePath)
                                 if (resourceResponse.isSuccessful) {
-                                    val resourceResponseBody = resourceResponse.body()!!
-                                    Log.d("download", resourceResponseBody.toString())
-                                    LocalNoteFileApi.writeFile(resourcePath, resourceResponseBody.byteStream(), context)
+                                    val resourceResponseBody = resourceResponse.body()
+                                    if (resourceResponseBody != null) {
+                                        LocalNoteFileApi.writeFile(resourcePath, resourceResponseBody.byteStream(), context)
+                                    }
                                 } else {
                                     val errorBody = resourceResponse.errorBody()?.string()
                                     val errorDetail = if (errorBody != null) {

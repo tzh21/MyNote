@@ -43,6 +43,26 @@ data class FileList(
     val files: List<String>
 )
 
+@Serializable
+data class MottoRequest(
+    val motto: String
+)
+
+@Serializable
+data class MottoResponse(
+    val motto: String
+)
+
+@Serializable
+data class NicknameRequest(
+    val nickname: String
+)
+
+@Serializable
+data class NicknameResponse(
+    val nickname: String
+)
+
 interface MyNoteApiService {
     @POST("login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
@@ -53,11 +73,31 @@ interface MyNoteApiService {
     @GET("list/{username}")
     suspend fun list(@Path("username") username: String): Response<FileList>
 
-    @Multipart
     @POST("upload/{path}")
+    @Multipart
     suspend fun upload(@Path("path") path: String, @Part file: MultipartBody.Part): Response<ResponseBody>
 
     @GET("download/{path}")
     @Streaming
     suspend fun download(@Path("path") path: String): Response<ResponseBody>
+
+    @GET("motto/{username}")
+    suspend fun getMotto(@Path("username") username: String): Response<MottoResponse>
+
+    @POST("motto/{username}")
+    suspend fun postMotto(@Path("username") username: String, @Body motto: MottoRequest): Response<ResponseBody>
+
+    @GET("nickname/{username}")
+    suspend fun getNickname(@Path("username") username: String): Response<NicknameResponse>
+
+    @POST("nickname/{username}")
+    suspend fun postNickname(@Path("username") username: String, @Body nickname: NicknameRequest): Response<ResponseBody>
+
+    @POST("avatar/{username}")
+    @Multipart
+    suspend fun postAvatar(@Path("username") username: String, @Part avatar: MultipartBody.Part): Response<ResponseBody>
+
+    @GET("avatar/{username}")
+    @Streaming
+    suspend fun getAvatar(@Path("username") username: String): Response<ResponseBody>
 }

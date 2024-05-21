@@ -40,4 +40,25 @@ interface NoteDao {
 
     @Delete
     suspend fun delete(note: NoteEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertProfile(profile: ProfileEntity)
+
+    @Query("SELECT * FROM profiles WHERE username = :username")
+    fun getProfile(username: String): Flow<ProfileEntity?>
+
+    @Query("SELECT COUNT(*) > 0 FROM profiles WHERE username = :username")
+    suspend fun doesProfileExist(username: String): Boolean
+
+    @Query("UPDATE profiles SET motto = :motto WHERE username = :username")
+    suspend fun updateMotto(username: String, motto: String)
+
+    @Query("UPDATE profiles SET nickname = :nickname WHERE username = :username")
+    suspend fun updateNickname(username: String, nickname: String)
+
+    @Query("UPDATE profiles SET avatar = :avatar WHERE username = :username")
+    suspend fun updateAvatar(username: String, avatar: String)
+
+    @Query("UPDATE profiles SET motto = :motto AND nickname = :nickname AND avatar = :avatar WHERE username = :username")
+    suspend fun updateProfile(username: String, motto: String, nickname: String, avatar: String)
 }
