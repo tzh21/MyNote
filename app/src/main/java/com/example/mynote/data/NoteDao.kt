@@ -28,7 +28,6 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE username = :username AND category = :category AND fileName = :fileName")
     suspend fun deleteNote(username: String, category: String, fileName: String)
 
-//    @Query("SELECT * FROM notes WHERE title LIKE '%' || :keyword || '%' OR category LIKE '%' || :keyword || '%'")
     @Query("SELECT * FROM notes WHERE username = :username AND title LIKE '%' || :keyword || '%' ORDER BY lastModifiedTime DESC")
     fun filterNotes(username: String, keyword: String): Flow<List<NoteEntity>>
 
@@ -55,10 +54,4 @@ interface NoteDao {
 
     @Query("UPDATE profiles SET nickname = :nickname WHERE username = :username")
     suspend fun updateNickname(username: String, nickname: String)
-
-    @Query("UPDATE profiles SET avatar = :avatar WHERE username = :username")
-    suspend fun updateAvatar(username: String, avatar: String)
-
-    @Query("UPDATE profiles SET motto = :motto AND nickname = :nickname AND avatar = :avatar WHERE username = :username")
-    suspend fun updateProfile(username: String, motto: String, nickname: String, avatar: String)
 }

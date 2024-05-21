@@ -30,6 +30,4 @@ data class ProfileEntity(
     val username: String = "",
     val nickname: String = "",
     val motto: String = "",
-    val avatar: String = "", // 头像相对路径
-//    val avatar: ByteArray = ByteArray(0)
 )

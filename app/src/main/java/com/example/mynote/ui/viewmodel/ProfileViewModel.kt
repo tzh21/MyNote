@@ -1,20 +1,15 @@
 package com.example.mynote.ui.viewmodel
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mynote.data.Block
-import com.example.mynote.data.BlockType
 import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.ProfileEntity
 import com.example.mynote.data.RemoteFileApi
-import com.example.mynote.data.getCurrentTime
 import com.example.mynote.network.MottoRequest
 import com.example.mynote.network.MyNoteApiService
 import com.example.mynote.network.NicknameRequest
@@ -25,15 +20,13 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.IOException
-import java.io.InputStream
 
 class ProfileViewModel(
     val noteDao: NoteDao,
     val apiService: MyNoteApiService,
 ): ViewModel() {
+    var isSyncing = mutableStateOf(false)
+
     companion object {
         private const val TIMEOUT_MILLIS = 50_000L
     }
@@ -103,37 +96,42 @@ class ProfileViewModel(
         context: Context
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            var newMotto = ""
-            val mottoResponse = apiService.getMotto(username.value)
-            if (mottoResponse.isSuccessful) {
-                val mottoBody = mottoResponse.body()
-                if (mottoBody != null) {
-                    newMotto = mottoBody.motto
-                }
-            }
+            isSyncing.value = true
 
-            var newNickname = ""
-            val nicknameResponse = apiService.getNickname(username.value)
-            if (nicknameResponse.isSuccessful) {
-                val nicknameBody = nicknameResponse.body()
-                if (nicknameBody != null) {
-                    newNickname = nicknameBody.nickname
+            try {
+                var newMotto = ""
+                val mottoResponse = apiService.getMotto(username.value)
+                if (mottoResponse.isSuccessful) {
+                    val mottoBody = mottoResponse.body()
+                    if (mottoBody != null) {
+                        newMotto = mottoBody.motto
+                    }
                 }
-            }
 
-            val avatarResponse = apiService.getAvatar(username.value)
-            if (avatarResponse.isSuccessful) {
-                val avatarBody = avatarResponse.body()
-                if (avatarBody != null) {
-                    LocalNoteFileApi.writeAvatar("${username.value}/avatar", avatarBody.byteStream(), context)
-                    avatarByteArray.value = LocalNoteFileApi.loadAvatar("${username.value}/avatar", context).readBytes()
+                var newNickname = ""
+                val nicknameResponse = apiService.getNickname(username.value)
+                if (nicknameResponse.isSuccessful) {
+                    val nicknameBody = nicknameResponse.body()
+                    if (nicknameBody != null) {
+                        newNickname = nicknameBody.nickname
+                    }
                 }
-            }
 
-            noteDao.insertProfile(ProfileEntity(username = username.value))
-            noteDao.updateNickname(username.value, newNickname)
-            noteDao.updateMotto(username.value, newMotto)
-            noteDao.updateAvatar(username.value, "${username.value}/avatar")
+                val avatarResponse = apiService.getAvatar(username.value)
+                if (avatarResponse.isSuccessful) {
+                    val avatarBody = avatarResponse.body()
+                    if (avatarBody != null) {
+                        LocalNoteFileApi.writeAvatar("${username.value}/avatar", avatarBody.byteStream(), context)
+                        avatarByteArray.value = LocalNoteFileApi.loadAvatar("${username.value}/avatar", context).readBytes()
+                    }
+                }
+
+                noteDao.insertProfile(ProfileEntity(username = username.value))
+                noteDao.updateNickname(username.value, newNickname)
+                noteDao.updateMotto(username.value, newMotto)
+            } finally {
+                isSyncing.value = false
+            }
         }
     }
 }

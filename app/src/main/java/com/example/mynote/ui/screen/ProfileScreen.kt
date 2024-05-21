@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.example.mynote.R
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
@@ -63,7 +62,7 @@ data object ProfileRoute {
     const val complete = "$base/{$username}"
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navigateToHome: () -> Unit,
@@ -239,6 +238,16 @@ fun ProfileScreen(
                 onDismissRequest = { viewModel.showNicknameDialog.value = false }
             )
         }
+
+        if (viewModel.isSyncing.value) {
+            AlertDialog(
+                shape = RectangleShape,
+                title = { Text(text = "同步中") },
+                text = { Text(text = "正在同步数据，请稍候") },
+                onDismissRequest = { },
+                confirmButton = { }
+            )
+        }
     }
 }
 
@@ -288,8 +297,8 @@ fun ItemRow(
 @Composable
 fun ProfileButton(
     onClick: () -> Unit,
-    text: String = "",
     modifier: Modifier = Modifier,
+    text: String = "",
     colors: ButtonColors = ButtonDefaults.buttonColors(),
 ) {
     Button(
