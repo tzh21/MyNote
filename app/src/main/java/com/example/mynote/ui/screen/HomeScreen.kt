@@ -1,6 +1,7 @@
 package com.example.mynote.ui.screen
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -71,7 +71,6 @@ import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
-import java.io.File
 
 data object HomeRoute {
     const val base = "home"
@@ -92,6 +91,8 @@ fun HomeScreen(
     category: String,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
+    Log.d("HomeScreen", "Recomposition")
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 

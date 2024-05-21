@@ -34,10 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.LocalNoteFileApi
-import com.example.mynote.data.noteBase
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.CategoryViewModel
@@ -162,35 +160,18 @@ fun CategoryScreen(
         }
 
         if (viewModel.showDialog.value) {
-            Dialog(onDismissRequest = { viewModel.setShowDialog(false) }) {
-                Card {
-                    Column {
-                        Text("新建分类")
-                        TextField(
-                            value = viewModel.newCategory.value,
-                            onValueChange = { newCategory -> viewModel.setNewCategory(newCategory) }
-                        )
-                        Row {
-                            Button(
-                                onClick = {
-                                    viewModel.setShowDialog(false)
-                                }
-                            ) {
-                                Text("取消")
-                            }
-                            Button(
-                                onClick = {
-                                    LocalNoteFileApi.createDir("$noteBase/${viewModel.username.value}/${viewModel.newCategory.value}", context)
-                                    viewModel.setDirs(context)
-                                    viewModel.setShowDialog(false)
-                                }
-                            ) {
-                                Text("确定")
-                            }
-                        }
-                    }
+            TextFieldDialog(
+                title = "新建分类",
+                text = { TextField(value = viewModel.newCategory.value, onValueChange = { newCategory -> viewModel.setNewCategory(newCategory) })},
+                onConfirmClick = {
+                    LocalNoteFileApi.createDir("${viewModel.username.value}/${viewModel.newCategory.value}", context)
+                    viewModel.setDirs(context)
+                    viewModel.setShowDialog(false)
+                },
+                onDismissRequest = {
+                    viewModel.setShowDialog(false)
                 }
-            }
+            )
         }
     }
 }
