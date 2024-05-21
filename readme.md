@@ -20,24 +20,3 @@
 
 - [ ] 主页长按笔记移动分类
 
-# 理想文件结构
-
-home
-
-username
-
-​	notes
-
-​		noteDir1
-
-​			block
-
-​			image
-
-​			audio
-
-​		...
-
-​	profile
-
-​		avatar
