@@ -19,3 +19,15 @@ data class NoteEntity(
     val coverImage: String, // 封面图片
     val lastModifiedTime: String
 )
+
+@Entity(
+    tableName = "profiles",
+    indices = [Index(value = ["username"], unique = true)]
+)
+data class ProfileEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val username: String = "",
+    val nickname: String = "",
+    val motto: String = "",
+)

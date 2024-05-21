@@ -15,6 +15,8 @@ import com.example.mynote.ui.screen.HomeRoute
 import com.example.mynote.ui.screen.HomeScreen
 import com.example.mynote.ui.screen.LoginRoute
 import com.example.mynote.ui.screen.LoginScreen
+import com.example.mynote.ui.screen.ProfileRoute
+import com.example.mynote.ui.screen.ProfileScreen
 import com.example.mynote.ui.screen.SignupRoute
 import com.example.mynote.ui.screen.SignupScreen
 
@@ -54,7 +56,8 @@ fun MyNoteNavHost(
                 navigateToCategory = { navController.navigate("${CategoryRoute.base}/$username/$category") },
                 navigateToEditorScreen = { noteTitle ->
                     navController.navigate("${EditorRoute.base}/$username/$category/$noteTitle")},
-                navigateToLogin = { navController.navigate(LoginRoute) },
+//                navigateToLogin = { navController.navigate(LoginRoute) },
+                navigateToProfile = { navController.navigate("${ProfileRoute.base}/$username") },
                 navigateToHome = { newCategory -> navController.navigate("${HomeRoute.base}/$username/$newCategory") },
                 username = username,
                 category = category,
@@ -99,5 +102,20 @@ fun MyNoteNavHost(
                 fileName = noteTitle,
             )
         }
+
+        composable(
+            route = ProfileRoute.complete,
+            arguments = listOf(
+                navArgument(ProfileRoute.username) {type = NavType.StringType}
+            )
+        ) {
+            val username = it.arguments?.getString(ProfileRoute.username) ?: "null"
+            ProfileScreen(
+                navigateToHome = { navController.navigate("${HomeRoute.base}/$username/${HomeRoute.defaultCategory}") },
+                navigateToLogin = { navController.navigate(LoginRoute) },
+                username = username,
+            )
+        }
+
     }
 }

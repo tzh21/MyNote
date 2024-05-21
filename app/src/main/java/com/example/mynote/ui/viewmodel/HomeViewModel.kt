@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
-import com.example.mynote.data.LocalFileApi
+import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
@@ -81,7 +81,7 @@ class HomeViewModel(
             title = "",
             body = listOf(Block(type = BlockType.BODY, data = ""))
         )
-        LocalFileApi.saveNote(
+        LocalNoteFileApi.saveNote(
             "${username.value}/${category.value}/$fileName",
             note,
             context
@@ -105,7 +105,7 @@ class HomeViewModel(
     //        从数据库中删除所有笔记
             noteDao.deleteAllNotes(username.value, category.value)
     //        从文件系统中删除所有笔记
-            LocalFileApi.clearDir("${username.value}/${category.value}", context)
+            LocalNoteFileApi.clearDir("${username.value}/${category.value}", context)
         }
     }
 
@@ -126,9 +126,8 @@ class HomeViewModel(
                     val fileResponse = apiService.download(filePath)
                     if (fileResponse.isSuccessful) {
 //                        保存笔记到文件系统
-//                        BUG files 会下载图片文件
                         val responseBody = fileResponse.body()!!
-                        LocalFileApi.writeFile(filePath, responseBody.byteStream(), context)
+                        LocalNoteFileApi.writeFile(filePath, responseBody.byteStream(), context)
 
                         val note = NoteLoaderApi.loadNote(filePath, context)
 
@@ -139,9 +138,10 @@ class HomeViewModel(
                                 val resourcePath = block.data
                                 val resourceResponse = apiService.download(resourcePath)
                                 if (resourceResponse.isSuccessful) {
-                                    val resourceResponseBody = resourceResponse.body()!!
-                                    Log.d("download", resourceResponseBody.toString())
-                                    LocalFileApi.writeFile(resourcePath, resourceResponseBody.byteStream(), context)
+                                    val resourceResponseBody = resourceResponse.body()
+                                    if (resourceResponseBody != null) {
+                                        LocalNoteFileApi.writeFile(resourcePath, resourceResponseBody.byteStream(), context)
+                                    }
                                 } else {
                                     val errorBody = resourceResponse.errorBody()?.string()
                                     val errorDetail = if (errorBody != null) {
@@ -220,7 +220,7 @@ class HomeViewModel(
 
     fun initCategoryList(context: Context) {
         categoryList.clear()
-        categoryList.addAll(LocalFileApi.listDirs(username.value, context))
+        categoryList.addAll(LocalNoteFileApi.listDirs(username.value, context))
     }
 
     fun initSelectedCategoryIndex(category: String) {
@@ -237,9 +237,9 @@ class HomeViewModel(
 //            删除数据库中的笔记
             noteDao.deleteNote(username, category, fileName)
 //            删除笔记文件
-            LocalFileApi.deleteFile("$username/$category/$fileName", context)
+            LocalNoteFileApi.deleteFile("$username/$category/$fileName", context)
 //            删除依赖文件
-            LocalFileApi.deleteFile("$username/$category/assets/$fileName", context)
+            LocalNoteFileApi.deleteFile("$username/$category/assets/$fileName", context)
         }
     }
 

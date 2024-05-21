@@ -9,7 +9,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.example.mynote.data.LocalFileApi
+import com.example.mynote.data.LocalNoteFileApi
 
 //点击按钮显示 path 下的所有文件和文件夹
 @Composable
@@ -28,7 +28,7 @@ fun FileList(
         Button(
             onClick = {
                 files.clear()
-                files.addAll(LocalFileApi.listFiles(path, context))
+                files.addAll(LocalNoteFileApi.listFiles(path, context))
                 show.value = !show.value
             }
         ) {

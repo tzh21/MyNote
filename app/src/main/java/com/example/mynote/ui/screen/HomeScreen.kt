@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -64,6 +65,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
@@ -84,7 +86,7 @@ data object HomeRoute {
 fun HomeScreen(
     navigateToCategory: () -> Unit,
     navigateToEditorScreen: (String) -> Unit,
-    navigateToLogin: () -> Unit,
+    navigateToProfile: () -> Unit,
     navigateToHome: (String) -> Unit,
     username: String,
     category: String,
@@ -107,15 +109,20 @@ fun HomeScreen(
             MediumTopAppBar(
                 title = { Text(text = "笔记", modifier = Modifier.padding(start = 16.dp)) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = { navigateToLogin() },
+                    Row(
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Logout,
-                            contentDescription = "Logout",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        IconButton(
+                            onClick = {
+                                navigateToProfile()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "User information",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -368,7 +375,7 @@ fun HomeScreen(
 //                                图片
                                     if (noteListState.noteList[index].coverImage != "") {
                                         val imagePath = noteListState.noteList[index].coverImage
-                                        val file = File(context.filesDir, imagePath)
+                                        val file = LocalNoteFileApi.loadFile(imagePath, context)
                                         if (file.exists()) {
                                             val image = file.toUri().toString()
                                             GlideImage(

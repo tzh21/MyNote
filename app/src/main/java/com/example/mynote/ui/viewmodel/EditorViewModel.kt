@@ -12,7 +12,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
-import com.example.mynote.data.LocalFileApi
+import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
@@ -68,7 +68,7 @@ class EditorViewModel(
             body = noteBody
         )
 //        更新到文件系统
-        LocalFileApi.saveNote("${username.value}/${category.value}/${fileName.value}", note, context)
+        LocalNoteFileApi.saveNote("${username.value}/${category.value}/${fileName.value}", note, context)
 
 //        更新封面图片
         var coverImage = ""
@@ -102,20 +102,20 @@ class EditorViewModel(
 
     fun initCategoryList(context: Context) {
         categoryList.clear()
-        categoryList.addAll(LocalFileApi.listDirs(username.value, context))
+        categoryList.addAll(LocalNoteFileApi.listDirs(username.value, context))
     }
 
     suspend fun moveNote(newCategory: String, context: Context) {
 //        保存更改
         saveNote(context)
 
-        LocalFileApi.moveFile(
+        LocalNoteFileApi.moveFile(
             "${username.value}/${category.value}/${fileName.value}",
             "${username.value}/${newCategory}/${fileName.value}",
             context
         )
 
-        LocalFileApi.moveDir(
+        LocalNoteFileApi.moveDir(
             "${username.value}/${category.value}/assets/${fileName.value}",
             "${username.value}/${newCategory}/assets/${fileName.value}",
             context
@@ -138,7 +138,7 @@ class EditorViewModel(
                 "${username.value}/${category.value}/assets/${fileName.value}/image/$currentTime"
             else
                 "${username.value}/${category.value}/assets/${fileName.value}/audio/$currentTime"
-        LocalFileApi.saveResource(uri, path, context)
+        LocalNoteFileApi.saveResource(uri, path, context)
 
         var insertIndex = currentBlockIndex.value + 1
 //        当前文本块为空时，插入图片到当前文本块

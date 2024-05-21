@@ -28,7 +28,6 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE username = :username AND category = :category AND fileName = :fileName")
     suspend fun deleteNote(username: String, category: String, fileName: String)
 
-//    @Query("SELECT * FROM notes WHERE title LIKE '%' || :keyword || '%' OR category LIKE '%' || :keyword || '%'")
     @Query("SELECT * FROM notes WHERE username = :username AND title LIKE '%' || :keyword || '%' ORDER BY lastModifiedTime DESC")
     fun filterNotes(username: String, keyword: String): Flow<List<NoteEntity>>
 
@@ -40,4 +39,19 @@ interface NoteDao {
 
     @Delete
     suspend fun delete(note: NoteEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertProfile(profile: ProfileEntity)
+
+    @Query("SELECT * FROM profiles WHERE username = :username")
+    fun getProfile(username: String): Flow<ProfileEntity?>
+
+    @Query("SELECT COUNT(*) > 0 FROM profiles WHERE username = :username")
+    suspend fun doesProfileExist(username: String): Boolean
+
+    @Query("UPDATE profiles SET motto = :motto WHERE username = :username")
+    suspend fun updateMotto(username: String, motto: String)
+
+    @Query("UPDATE profiles SET nickname = :nickname WHERE username = :username")
+    suspend fun updateNickname(username: String, nickname: String)
 }
