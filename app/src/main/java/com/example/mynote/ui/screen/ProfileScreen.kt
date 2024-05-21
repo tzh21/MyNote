@@ -168,8 +168,8 @@ fun ProfileScreen(
             ) {
                 Text(text = "昵称", modifier = Modifier.widthIn(100.dp))
                 Spacer(modifier = Modifier.weight(1f))
-                if (profileState.value.profile.nickname.isNotEmpty()) {
-                    Text(text = profileState.value.profile.nickname)
+                if (profileState.value.nickname.isNotEmpty()) {
+                    Text(text = profileState.value.nickname)
                 } else {
                     Text(text = "未设置", color = Color.Gray)
                 }
@@ -180,10 +180,10 @@ fun ProfileScreen(
             ) {
                 Text(text = "个性签名", modifier = Modifier.widthIn(100.dp))
                 Spacer(modifier = Modifier.weight(1f))
-                if (profileState.value.profile.motto.isEmpty()) {
+                if (profileState.value.motto.isEmpty()) {
                     Text(text = "点击设置个性签名", color = Color.Gray)
                 } else {
-                    Text(text = profileState.value.profile.motto)
+                    Text(text = profileState.value.motto)
                 }
             }
             Divider(thickness = 1.dp)
@@ -203,7 +203,7 @@ fun ProfileScreen(
 
         if (viewModel.showMottoDialog.value) {
             val tempMotto = rememberSaveable {
-                mutableStateOf(profileState.value.profile.motto)
+                mutableStateOf(profileState.value.motto)
             }
             TextFieldDialog(
                 title = "修改个性签名",
@@ -222,7 +222,7 @@ fun ProfileScreen(
 
         if (viewModel.showNicknameDialog.value) {
             val tempNickname = rememberSaveable {
-                mutableStateOf(profileState.value.profile.nickname)
+                mutableStateOf(profileState.value.nickname)
             }
             TextFieldDialog(
                 title = "修改昵称",
