@@ -1,6 +1,5 @@
 package com.example.mynote.ui.viewmodel
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mynote.network.ErrorResponse
@@ -21,7 +20,7 @@ enum class LoginStatus {
 }
 
 data class LoginState(
-    val email: String = "",
+    val username: String = "",
     val password: String = "",
     val status: LoginStatus = LoginStatus.INACTIVE,
     val errorDetail: String = ""
@@ -35,7 +34,7 @@ class LoginViewModel(
 
     fun onEmailChange(email: String) {
         _uiState.update {
-            it.copy(email = email)
+            it.copy(username = email)
         }
     }
 
@@ -51,7 +50,7 @@ class LoginViewModel(
                 it.copy(status = LoginStatus.LOADING)
             }
             try {
-                val response = apiService.login(LoginRequest(_uiState.value.email, _uiState.value.password))
+                val response = apiService.login(LoginRequest(_uiState.value.username, _uiState.value.password))
                 if (response.isSuccessful) {
                     _uiState.update {
                         it.copy(status = LoginStatus.SUCCESS)
@@ -84,7 +83,7 @@ class LoginViewModel(
     }
     fun defaultLogin() {
         _uiState.update {
-            it.copy(email = "3", password = "4")
+            it.copy(username = "3", password = "4")
         }
         onLoginTriggered()
     }

@@ -23,7 +23,10 @@ interface NoteDao {
     fun getNoteByName(username: String, category: String, fileName: String): Flow<NoteEntity>
 
     @Query("DELETE FROM notes WHERE username = :username AND category = :category")
-    suspend fun deleteAllNotes(username: String, category: String)
+    suspend fun deleteAllNotesInCategory(username: String, category: String)
+
+    @Query("DELETE FROM notes WHERE username = :username")
+    suspend fun deleteAllNotes(username: String)
 
     @Query("DELETE FROM notes WHERE username = :username AND category = :category AND fileName = :fileName")
     suspend fun deleteNote(username: String, category: String, fileName: String)
@@ -32,7 +35,7 @@ interface NoteDao {
     fun filterNotes(username: String, keyword: String): Flow<List<NoteEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(note: NoteEntity)
+    suspend fun insertNote(note: NoteEntity)
 
     @Update
     suspend fun update(note: NoteEntity)
@@ -54,4 +57,10 @@ interface NoteDao {
 
     @Query("UPDATE profiles SET nickname = :nickname WHERE username = :username")
     suspend fun updateNickname(username: String, nickname: String)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertCategory(category: CategoryEntity)
+
+    @Query("SELECT category FROM categories WHERE username = :username")
+    fun getAllCategories(username: String): Flow<List<String>>
 }

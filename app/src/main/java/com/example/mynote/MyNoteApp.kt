@@ -1,7 +1,12 @@
 package com.example.mynote
 
+import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -20,12 +25,22 @@ import com.example.mynote.ui.screen.ProfileRoute
 import com.example.mynote.ui.screen.ProfileScreen
 import com.example.mynote.ui.screen.SignupRoute
 import com.example.mynote.ui.screen.SignupScreen
+import com.example.mynote.ui.viewmodel.AppViewModelProvider
 
 @Composable
 fun MyNoteApp(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
+    viewModel: MyNoteViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    LaunchedEffect(viewModel.username) {
+        if (viewModel.username != null) {
+            viewModel.loadCategoryNotesMap(username = viewModel.username!!)
+        }
+    }
+
+    val categoryNotesMap by viewModel.categoryNotesMap.collectAsState()
+
     NavHost(
         navController = navController,
         startDestination = LoginRoute,
@@ -33,8 +48,10 @@ fun MyNoteApp(
     ) {
         composable(route = LoginRoute) {
             LoginScreen(
-                navigateToHome = { navController.navigate("${HomeRoute.base}/$it/${HomeRoute.defaultCategory}") },
-                navigateToSignup = { navController.navigate(SignupRoute) }
+                navigateToHome = { loginUsername ->
+                    viewModel.username = loginUsername
+                    navController.navigate("${HomeRoute.base}/$loginUsername/${HomeRoute.defaultCategory}") },
+                navigateToSignup = { navController.navigate(SignupRoute) },
             )
         }
 
@@ -51,7 +68,7 @@ fun MyNoteApp(
                 navArgument(HomeRoute.category) { type = NavType.StringType }
             )
         ) {
-            val username = it.arguments?.getString(HomeRoute.username) ?: "null"
+            val username = it.arguments!!.getString(HomeRoute.username)
             val category = it.arguments?.getString(HomeRoute.category) ?: HomeRoute.defaultCategory
             HomeScreen(
                 navigateToCategory = { navController.navigate("${CategoryRoute.base}/$username/$category") },
@@ -59,8 +76,9 @@ fun MyNoteApp(
                     navController.navigate("${EditorRoute.base}/$username/$category/$noteTitle")},
                 navigateToProfile = { navController.navigate("${ProfileRoute.base}/$username") },
                 navigateToHome = { newCategory -> navController.navigate("${HomeRoute.base}/$username/$newCategory") },
-                username = username,
+                username = username!!,
                 category = category,
+                noteList = categoryNotesMap[category] ?: emptyList()
             )
         }
 

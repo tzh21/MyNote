@@ -3,7 +3,6 @@
 package com.example.mynote.ui.screen
 
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,8 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.Config
 import com.example.mynote.R
 import com.example.mynote.ui.component.MyNoteTopBar
-import com.example.mynote.ui.theme.DarkColorScheme
-import com.example.mynote.ui.theme.LightColorScheme
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.LoginStatus
@@ -77,7 +74,7 @@ fun LoginScreen(
                     .padding(32.dp)
             ) {
                 OutlinedTextField(
-                    value = uiState.value.email,
+                    value = uiState.value.username,
                     onValueChange = { viewModel.onEmailChange(it) },
                     label = { Text("账号") },
                     shape = RoundedCornerShape(dimensionResource(R.dimen.rounded_corner_size)),
@@ -171,7 +168,8 @@ fun LoginScreen(
                         when (uiState.value.status) {
                             LoginStatus.SUCCESS -> {
                                 StatusText("登录成功")
-                                navigateToHome(uiState.value.email)
+//                                setUsername(uiState.value.username)
+                                navigateToHome(uiState.value.username)
                             }
                             LoginStatus.ERROR -> {
                                 StatusText("登录失败")

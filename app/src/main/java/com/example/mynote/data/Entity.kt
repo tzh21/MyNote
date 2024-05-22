@@ -31,3 +31,14 @@ data class ProfileEntity(
     val nickname: String = "",
     val motto: String = "",
 )
+
+@Entity(
+    tableName = "categories",
+    indices = [Index(value = ["username", "category"], unique = true)]
+)
+data class CategoryEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val username: String = "",
+    val category: String = "",
+)
