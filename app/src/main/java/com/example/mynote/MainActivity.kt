@@ -24,10 +24,10 @@ class MainActivity : ComponentActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-//        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-
         setContent {
             MyNoteTheme {
+
+//                用于设置状态栏透明
                 val systemUiController = rememberSystemUiController()
                 val darkTheme = isSystemInDarkTheme()
                 SideEffect {
