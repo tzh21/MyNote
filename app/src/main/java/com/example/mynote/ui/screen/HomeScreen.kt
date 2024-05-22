@@ -80,6 +80,9 @@ data object HomeRoute {
     const val complete = "$base/{$username}/{$category}"
 }
 
+//nfs:
+//HomeScreen 直接从上级接收的 List<NoteEntity>，不再从 ViewModel 中获取，这样可以避免重复加载
+//相应地，HomeScreen 需要从上级接收修改笔记列表的函数，以便在增加或删除笔记时更新列表
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun HomeScreen(
