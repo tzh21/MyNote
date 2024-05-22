@@ -23,8 +23,8 @@ import com.example.mynote.ui.screen.SignupScreen
 
 @Composable
 fun MyNoteApp(
-    navController: NavHostController = rememberNavController(),
     modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController(),
 ) {
     NavHost(
         navController = navController,
