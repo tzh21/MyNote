@@ -62,6 +62,8 @@ class EditorViewModel(
     }
 
 //    本地保存笔记
+//    BUG：保存笔记时，如果笔记分类发生更改，则资源文件路径需要对应发生更改
+//    这个 BUG 的根源是文件系统设计的不合理
     suspend fun saveNote(context: Context) {
         note = Note(
             title = noteTitle.value,
