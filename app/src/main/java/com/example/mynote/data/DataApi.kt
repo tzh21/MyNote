@@ -318,6 +318,10 @@ object LocalNoteFileApi {
         return loadFile("${imageBase(username)}/$fileName", context)
     }
 
+    fun loadAudio(username: String, fileName: String, context: Context): File {
+        return loadFile("${audioBase(username)}/$fileName", context)
+    }
+
     fun deleteImage(username: String, fileName: String, context: Context) {
         deleteFile("${imageBase(username)}/$fileName", context)
     }

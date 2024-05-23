@@ -140,6 +140,10 @@ class EditorViewModel(
         insertResource(uri, BlockType.IMAGE, context)
     }
 
+    fun insertAudio(uri: Uri, context: Context) {
+        insertResource(uri, BlockType.AUDIO, context)
+    }
+
     fun deleteResource(fileName: String, type: BlockType, context: Context) {
         when(type) {
             BlockType.IMAGE -> {
@@ -156,6 +160,30 @@ class EditorViewModel(
 
     fun deleteImage(fileName: String, context: Context) {
         deleteResource(fileName, BlockType.IMAGE, context)
+    }
+
+    fun deleteAudio(fileName: String, context: Context) {
+        deleteResource(fileName, BlockType.AUDIO, context)
+    }
+
+    lateinit var player: ExoPlayer
+
+    fun initExoPlayer(context: Context) {if (!::player.isInitialized) {player = ExoPlayer.Builder(context).build()}}
+    var isPlaying by mutableStateOf(false)
+    var currentAudioUri by mutableStateOf(Uri.EMPTY)
+    fun playOrPauseAudio(audioUri: Uri) {
+        if (player.isPlaying && currentAudioUri == audioUri) {
+            player.pause()
+            isPlaying = false
+        }
+        else {
+            currentAudioUri = audioUri
+            val mediaItem = MediaItem.fromUri(audioUri)
+            player.setMediaItem(mediaItem)
+            player.prepare()
+            player.play()
+            isPlaying = true
+        }
     }
 }
 

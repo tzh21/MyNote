@@ -25,8 +25,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PauseCircleOutline
+import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -67,6 +71,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
@@ -76,7 +81,6 @@ import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
-import java.io.File
 
 data object EditorRoute {
     const val base = "note"
@@ -103,13 +107,11 @@ fun EditorScreen(
     viewModel.category = category
     viewModel.fileName = fileName
 
-    LaunchedEffect(username) {
+    LaunchedEffect(Unit) {
         viewModel.loadCategoryList(username)
-    }
-
-    LaunchedEffect(fileName) {
         viewModel.loadNote(context)
         viewModel.loadLastModifiedTime()
+        viewModel.initExoPlayer(context)
     }
 
     Scaffold(
@@ -128,43 +130,44 @@ fun EditorScreen(
                 }
             },
             actions = {
-                var categoriesExpanded by remember { mutableStateOf(false) }
-
-                Row(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    AssistChip(
-                        onClick = { categoriesExpanded = true },
-                        label = { Text(text = viewModel.category) },
-                        border = null,
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
-                        ),
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = categoriesExpanded,
-                    onDismissRequest = { categoriesExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(text = "新建分类") },
-                        onClick = { viewModel.showNewCategoryDialog = true }
-                    )
-                    val categoryList by viewModel.categoryList.collectAsState()
-                    categoryList.forEach { categoryItem ->
-                        DropdownMenuItem(
-                            text = { Text(categoryItem) },
-                            onClick = {
-                                coroutineScope.launch {
-                                    categoriesExpanded = false
-                                    viewModel.moveNote(categoryItem)
-                                    navigateToEditor(categoryItem, viewModel.fileName)
-                                }
-                            }
+                Box {
+                    var categoriesExpanded by remember { mutableStateOf(false) }
+                    Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        AssistChip(
+                            onClick = { categoriesExpanded = true },
+                            label = { Text(text = viewModel.category) },
+                            border = null,
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            ),
                         )
+                    }
+                    DropdownMenu(
+                        expanded = categoriesExpanded,
+                        onDismissRequest = { categoriesExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(text = "新建分类") },
+                            onClick = { viewModel.showNewCategoryDialog = true }
+                        )
+                        val categoryList by viewModel.categoryList.collectAsState()
+                        categoryList.forEach { categoryItem ->
+                            DropdownMenuItem(
+                                text = { Text(categoryItem) },
+                                onClick = {
+                                    coroutineScope.launch {
+                                        categoriesExpanded = false
+                                        viewModel.moveNote(categoryItem)
+                                        navigateToEditor(categoryItem, viewModel.fileName)
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
-        )},
+        )
+                 },
         bottomBar = {
             Column {
                 Divider(thickness = 1.dp)
@@ -175,6 +178,7 @@ fun EditorScreen(
                         .padding(vertical = 16.dp)
                 ) {
                     ImagePicker { viewModel.insertImage(it, context) }
+                    AudioPicker { viewModel.insertAudio(it, context) }
                 }
             }
         }
@@ -263,7 +267,16 @@ fun EditorScreen(
                                 )
                             }
                             BlockType.AUDIO -> {
-
+                                val uri = LocalNoteFileApi.loadAudio(username, blockData, context).toUri()
+                                val isPlaying = (viewModel.isPlaying && viewModel.currentAudioUri == uri)
+                                AudioBlock(
+                                    isPlaying = isPlaying,
+                                    removeBlock = {
+                                        viewModel.noteBody.removeAt(index)
+                                        viewModel.deleteAudio(blockData, context)
+                                    },
+                                    playAudio = {viewModel.playOrPauseAudio(uri)}
+                                )
                             }
                         }
                     }
@@ -343,7 +356,7 @@ fun ImageBlock(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .pointerInput(Unit) { detectTapGestures(onLongPress = { expanded = true })}
+                    .pointerInput(Unit) { detectTapGestures(onLongPress = { expanded = true }) }
             )
         }
 
@@ -376,6 +389,88 @@ fun ImagePicker(onImageSelected: (Uri) -> Unit) {
         Icon(
             imageVector = Icons.Default.Image,
             contentDescription = "Image",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+fun AudioBlock(
+    isPlaying: Boolean,
+    removeBlock: () -> Unit = {},
+    playAudio: () -> Unit = {}
+) {
+    var expanded by remember {mutableStateOf(false)}
+
+    Box(
+        modifier = Modifier.padding(bottom = 8.dp)
+    ) {
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            modifier = Modifier
+                .pointerInput(Unit) { detectTapGestures(onLongPress = { expanded = true }) }
+                .height(56.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(vertical = 8.dp),
+            ) {
+                IconButton(onClick = {playAudio()}) {
+                    if (isPlaying) {
+                        Icon(
+                            imageVector = Icons.Default.PauseCircleOutline,
+                            contentDescription = "play the audio",
+                        )
+                    }
+                    else {
+                        Icon(
+                            imageVector = Icons.Default.PlayCircleOutline,
+                            contentDescription = "pause the audio",
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = {removeBlock()}) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete audio"
+                    )
+                }
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(text = { Text("删除") }, onClick = { removeBlock() })
+        }
+    }
+}
+
+@Composable
+fun AudioPicker(onAudioSelected: (Uri) -> Unit) {
+    val pickAudioLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val selectedImageUri = result.data?.data
+            if (selectedImageUri != null) {
+                onAudioSelected(selectedImageUri)
+            }
+        }
+    }
+
+    IconButton(
+        onClick = {
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+            pickAudioLauncher.launch(intent)
+        }
+    ) {
+        Icon(
+            imageVector = Icons.Default.AudioFile,
+            contentDescription = "Audio",
             tint = MaterialTheme.colorScheme.primary
         )
     }
