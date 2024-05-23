@@ -6,7 +6,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.RectangleShape
-import com.example.mynote.ui.screen.ProfileButton
 
 @Composable
 fun TextFieldDialog(
@@ -21,12 +20,12 @@ fun TextFieldDialog(
         text = text,
         onDismissRequest = { },
         confirmButton = {
-            ProfileButton(
+            MaxWidthButton(
                 onClick = { onConfirmClick() },
                 text = "确定")
         },
         dismissButton = {
-            ProfileButton(
+            MaxWidthButton(
                 onClick = { onDismissRequest() },
                 text = "取消",
                 colors = ButtonDefaults.buttonColors(

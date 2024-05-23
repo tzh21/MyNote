@@ -43,7 +43,9 @@ object AppViewModelProvider {
         }
 
         initializer {
-            CategoryViewModel()
+            CategoryViewModel(
+                myNoteApplication().container.noteDao
+            )
         }
 
         initializer {

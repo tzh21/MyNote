@@ -290,7 +290,9 @@ fun EditorScreen(
                 title = "新建分类",
                 text = {TextField(value = newCategory, onValueChange = { newCategory = it })},
                 onConfirmClick = {
-                    viewModel.createCategory(newCategory)
+                    if (newCategory.isNotEmpty()) {
+                        viewModel.createCategory(newCategory)
+                    }
                     viewModel.showNewCategoryDialog = false
                 },
                 onDismissRequest = {

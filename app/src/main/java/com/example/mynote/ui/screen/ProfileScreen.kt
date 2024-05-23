@@ -51,6 +51,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.R
+import com.example.mynote.ui.component.MaxWidthButton
 import com.example.mynote.ui.component.TextFieldDialog
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
@@ -189,13 +190,13 @@ fun ProfileScreen(
             }
             Divider(thickness = 1.dp)
             Spacer(modifier = Modifier.height(32.dp))
-            ProfileButton(
+            MaxWidthButton(
                 onClick = { },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 text = "修改密码"
             )
             Spacer(modifier = Modifier.height(8.dp))
-            ProfileButton(
+            MaxWidthButton(
                 onClick = { navigateToLogin() },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 text = "退出登录"
@@ -295,21 +296,21 @@ fun ItemRow(
     }
 }
 
-@Composable
-fun ProfileButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    text: String = "",
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
-) {
-    Button(
-        onClick = { onClick() },
-        shape = RoundedCornerShape(8.dp),
-        colors = colors,
-        modifier = modifier
-            .height(dimensionResource(id = R.dimen.text_field_height))
-            .fillMaxWidth()
-    ) {
-        Text(text = text, fontSize = Typography.titleMedium.fontSize)
-    }
-}
+//@Composable
+//fun MaxWidthButton(
+//    onClick: () -> Unit,
+//    modifier: Modifier = Modifier,
+//    text: String = "",
+//    colors: ButtonColors = ButtonDefaults.buttonColors(),
+//) {
+//    Button(
+//        onClick = { onClick() },
+//        shape = RoundedCornerShape(8.dp),
+//        colors = colors,
+//        modifier = modifier
+//            .height(dimensionResource(id = R.dimen.text_field_height))
+//            .fillMaxWidth()
+//    ) {
+//        Text(text = text, fontSize = Typography.titleMedium.fontSize)
+//    }
+//}

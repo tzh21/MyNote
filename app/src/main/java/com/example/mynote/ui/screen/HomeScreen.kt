@@ -392,9 +392,7 @@ fun HomeScreen(
                     ) {
                         items(categoryList.size) { index ->
                             FilterChip(
-                                onClick = {
-                                    navigateToHome(categoryList[index])
-                                          },
+                                onClick = { navigateToHome(categoryList[index]) },
                                 label = {
                                     Text(text = categoryList[index])
                                 },
