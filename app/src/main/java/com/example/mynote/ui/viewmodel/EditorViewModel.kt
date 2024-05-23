@@ -57,17 +57,28 @@ class EditorViewModel(
         }
     }
 
+//    将标题和正文合并为一个字符串，用于后续数据库检索
+    fun getBodyString(): String {
+        var bodyString = ""
+        for (block in noteBody) {
+            bodyString += "${block.data} \n"
+        }
+        return bodyString
+    }
+
     suspend fun saveNote(context: Context) {
         viewModelScope.launch {
     //        本地保存文件
             val note = Note(title = noteTitle, body = noteBody)
             LocalNoteFileApi.saveNote(username, fileName, note, context)
     //        数据库中保存文件
+            val bodyString = getBodyString()
             val oldEntity = noteDao.getNoteByName(username, fileName)
                 .filterNotNull()
                 .first()
             noteDao.updateNote(oldEntity.copy(
                 title = noteTitle,
+                keyword = bodyString,
                 lastModifiedTime = getCurrentTime()
             ))
         }
@@ -100,7 +111,6 @@ class EditorViewModel(
             val oldEntity = noteDao.getNoteByName(username, fileName)
                 .filterNotNull()
                 .first()
-            Log.d("focus", oldEntity.toString())
             noteDao.updateNote(oldEntity.copy(
                 category = newCategory,
                 lastModifiedTime = getCurrentTime()
@@ -150,7 +160,7 @@ class EditorViewModel(
                 LocalNoteFileApi.deleteImage(username, fileName, context)
             }
             BlockType.AUDIO -> {
-//                LocalNoteFileApi.deleteAudio(username, fileName, context)
+                LocalNoteFileApi.deleteAudio(username, fileName, context)
             }
             else -> {
                 throw Exception("Invalid BlockType")

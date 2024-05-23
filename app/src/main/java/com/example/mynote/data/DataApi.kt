@@ -325,6 +325,10 @@ object LocalNoteFileApi {
     fun deleteImage(username: String, fileName: String, context: Context) {
         deleteFile("${imageBase(username)}/$fileName", context)
     }
+
+    fun deleteAudio(username: String, fileName: String, context: Context) {
+        deleteFile("${audioBase(username)}/$fileName", context)
+    }
 }
 
 object NoteLoaderApi {

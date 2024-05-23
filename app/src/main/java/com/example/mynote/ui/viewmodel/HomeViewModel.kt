@@ -67,8 +67,6 @@ class HomeViewModel(
 //    删除笔记
     suspend fun deleteNote(fileName: String, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
-            val filePath = "${username}/blocks/$fileName"
-
 //            数据库
             noteDao.deleteNote(username, category, fileName)
 //            文件系统
@@ -101,6 +99,8 @@ class HomeViewModel(
             noteDao.filterNotes(username, queryText).collect { queryResultsStateFlow.value = it }
         }
     }
+
+    var queryMode by mutableStateOf(false)
 
     fun loadFile(path: String, context: Context): File {
         return LocalNoteFileApi.loadFile(path, context)

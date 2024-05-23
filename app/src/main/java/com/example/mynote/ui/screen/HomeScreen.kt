@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -57,7 +57,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -296,113 +299,184 @@ fun HomeScreen(
                     }
                 }
 //                搜索结果
-//                TODO 美化
-                if (viewModel.isQueryFocused) {
+                if (viewModel.isQueryFocused && viewModel.queryText.isNotEmpty()) {
                     val queryNoteList by viewModel.queryResultsStateFlow.collectAsState()
-                    LazyColumn {
-                        items(queryNoteList.size) { index ->
-                            Card(
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp, horizontal = 16.dp)
-                            ) {
-                                Row {
-                                    Text(queryNoteList[index].title)
+                    viewModel.queryMode = queryNoteList.isNotEmpty()
+                    if (viewModel.queryMode) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        val orientation = LocalConfiguration.current.orientation
+//                        检索结果列表
+                        LazyVerticalStaggeredGrid(
+                            columns = if (orientation == Configuration.ORIENTATION_PORTRAIT) StaggeredGridCells.Fixed(2)
+                                else StaggeredGridCells.Adaptive(160.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalItemSpacing = 8.dp
+                        ) {
+                            val highlightColor = Color.Red
+
+                            items(queryNoteList.size) { index ->
+                                var showNoteOption by remember {
+                                    mutableStateOf(false)
                                 }
-                            }
-                        }
-                    }
-                }
-                LazyRow(
-                    modifier = Modifier.padding(top = 16.dp)
-                ) {
-                    items(categoryList.size) { index ->
-                        FilterChip(
-                            onClick = {
-                                navigateToHome(categoryList[index])
-                                      },
-                            label = {
-                                Text(text = categoryList[index])
-                            },
-                            selected = (categoryList[index] == category),
-                            border = null,
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .height(48.dp)
-                        )
-                    }
-                }
-
-                val orientation = LocalConfiguration.current.orientation
-                LazyVerticalStaggeredGrid(
-                    columns = if (orientation == Configuration.ORIENTATION_PORTRAIT) StaggeredGridCells.Fixed(2)
-                        else StaggeredGridCells.Adaptive(160.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalItemSpacing = 8.dp,
-                    modifier = Modifier.padding(top = 16.dp)
-                ) {
-                    items(noteList.size) { index ->
-                        var showNoteOption by remember {
-                            mutableStateOf(false)
-                        }
-
-//                        笔记条目
-                        Box {
-                            Card(
-                                onClick = { navigateToEditor(noteList[index].fileName) },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                ),
-                                modifier = Modifier
-                                    .pointerInput(Unit) {
-                                        detectTapGestures(
-                                            onTap = {navigateToEditor(noteList[index].fileName)},
-                                            onLongPress = {showNoteOption = true}
-                                        )
-                                    }
-                            ) {
-                                Column {
-//                                    封面图片
-                                    if (noteList[index].coverImage != "") {
-                                        val imagePath = noteList[index].coverImage
-                                        val file = viewModel.loadFile(imagePath, context)
-                                        if (file.exists()) {
-                                            val bitmap = BitmapFactory.decodeFile(file.absolutePath).asImageBitmap()
-                                            Image(bitmap = bitmap, contentDescription = "Cover image")
-                                        }
-                                    }
-//                                    笔记信息
-                                    Column(
-                                        modifier = Modifier.padding(12.dp)
+                                Box {
+                                    Card(
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .pointerInput(Unit) {
+                                                detectTapGestures(
+                                                    onTap = { navigateToEditor(queryNoteList[index].fileName) },
+                                                    onLongPress = { showNoteOption = true }
+                                                )
+                                            }
                                     ) {
-                                        val noteTitle = noteList[index].title
-                                        Text(
-                                            text = if (noteTitle == "") "未命名" else noteTitle,
-                                            fontSize = Typography.titleLarge.fontSize,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            text = noteList[index].lastModifiedTime,
-                                            fontSize = Typography.bodyMedium.fontSize,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(12.dp)
+                                        ) {
+                                            val noteTitle = queryNoteList[index].title
+                                            val annotatedTitle = buildAnnotatedString {
+                                                val startIndex = noteTitle.indexOf(viewModel.queryText)
+                                                if (startIndex != -1) {
+                                                    append(noteTitle.substring(0, startIndex))
+                                                    withStyle(style = SpanStyle(color = highlightColor)) {
+                                                        append(viewModel.queryText)
+                                                    }
+                                                    append(noteTitle.substring(startIndex + viewModel.queryText.length))
+                                                } else {
+                                                    append(noteTitle)
+                                                }
+                                            }
+                                            val annotatedKeyword = buildAnnotatedString {
+                                                val contextSize = 50
+                                                val matchIndex = queryNoteList[index].keyword.indexOf(viewModel.queryText)
+                                                val start = maxOf(0, matchIndex - contextSize)
+                                                val end = minOf(queryNoteList[index].keyword.length, matchIndex + viewModel.queryText.length + contextSize)
+                                                if (matchIndex != -1) {
+                                                    append(queryNoteList[index].keyword.substring(start, matchIndex))
+                                                    withStyle(style = SpanStyle(color = highlightColor)) {
+                                                        append(viewModel.queryText)
+                                                    }
+                                                    append(queryNoteList[index].keyword.substring(matchIndex + viewModel.queryText.length, end))
+                                                } else {
+                                                    append(queryNoteList[index].keyword)
+                                                }
+                                            }
+                                            Text(
+                                                text = if (noteTitle == "") buildAnnotatedString{append("未命名")} else annotatedTitle,
+                                                fontSize = Typography.titleLarge.fontSize,
+                                            )
+                                            Text(
+                                                text = queryNoteList[index].lastModifiedTime,
+                                                fontSize = Typography.bodyMedium.fontSize,
+                                                color = Color.Gray
+                                            )
+                                            Text(text = annotatedKeyword)
+                                        }
                                     }
                                 }
                             }
-                            DropdownMenu(
-                                expanded = showNoteOption,
-                                onDismissRequest = { showNoteOption = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("删除") },
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            viewModel.deleteNote(noteList[index].fileName, context)
+                        }
+                    }
+                } else {
+                    viewModel.queryMode = false
+                }
+                if (!viewModel.queryMode) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(categoryList.size) { index ->
+                            FilterChip(
+                                onClick = {
+                                    navigateToHome(categoryList[index])
+                                          },
+                                label = {
+                                    Text(text = categoryList[index])
+                                },
+                                selected = (categoryList[index] == category),
+                                border = null,
+                                modifier = Modifier
+                                    .height(48.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    val orientation = LocalConfiguration.current.orientation
+    //                笔记列表
+                    LazyVerticalStaggeredGrid(
+                        columns = if (orientation == Configuration.ORIENTATION_PORTRAIT) StaggeredGridCells.Fixed(2)
+                            else StaggeredGridCells.Adaptive(160.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalItemSpacing = 8.dp
+                    ) {
+                        items(noteList.size) { index ->
+                            var showNoteOption by remember {
+                                mutableStateOf(false)
+                            }
+    //                        笔记条目
+                            Box {
+                                Card(
+                                    onClick = { navigateToEditor(noteList[index].fileName) },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .pointerInput(Unit) {
+                                            detectTapGestures(
+                                                onTap = { navigateToEditor(noteList[index].fileName) },
+                                                onLongPress = { showNoteOption = true }
+                                            )
+                                        }
+                                ) {
+                                    Column {
+    //                                    封面图片
+                                        if (noteList[index].coverImage != "") {
+                                            val imagePath = noteList[index].coverImage
+                                            val file = viewModel.loadFile(imagePath, context)
+                                            if (file.exists()) {
+                                                val bitmap = BitmapFactory.decodeFile(file.absolutePath).asImageBitmap()
+                                                Image(bitmap = bitmap, contentDescription = "Cover image")
+                                            }
+                                        }
+    //                                    笔记信息
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(12.dp)
+                                        ) {
+                                            val noteTitle = noteList[index].title
+                                            Text(
+                                                text = if (noteTitle == "") "未命名" else noteTitle,
+                                                fontSize = Typography.titleLarge.fontSize,
+                                            )
+                                            Text(
+                                                text = noteList[index].lastModifiedTime,
+                                                fontSize = Typography.bodyMedium.fontSize,
+                                                color = Color.Gray
+                                            )
                                         }
                                     }
-                                )
+                                }
+                                DropdownMenu(
+                                    expanded = showNoteOption,
+                                    onDismissRequest = { showNoteOption = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("删除") },
+                                        onClick = {
+                                            coroutineScope.launch {
+                                                viewModel.deleteNote(noteList[index].fileName, context)
+                                            }
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -411,8 +485,6 @@ fun HomeScreen(
         }
     }
 }
-
-
 
 //@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 //@Composable

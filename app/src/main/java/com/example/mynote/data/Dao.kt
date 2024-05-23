@@ -34,8 +34,12 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE username = :username AND category = :category AND fileName = :fileName")
     suspend fun deleteNote(username: String, category: String, fileName: String)
 
-    @Query("SELECT * FROM notes WHERE username = :username AND title LIKE '%' || :keyword || '%' ORDER BY lastModifiedTime DESC")
-    fun filterNotes(username: String, keyword: String): Flow<List<NoteEntity>>
+    @Query("""
+        SELECT * FROM notes WHERE username = :username
+        AND (keyword LIKE '%' || :queryText || '%' OR title LIKE '%' || :queryText || '%')
+        ORDER BY lastModifiedTime DESC
+    """)
+    fun filterNotes(username: String, queryText: String): Flow<List<NoteEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNote(note: NoteEntity)
