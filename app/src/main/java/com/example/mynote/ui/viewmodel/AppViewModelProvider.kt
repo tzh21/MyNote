@@ -28,13 +28,12 @@ object AppViewModelProvider {
             )
         }
 
-//        initializer {
-//            HomeViewModel(
-//                myNoteApplication().container.noteDao,
-//                myNoteApplication().container.myNoteApiService,
-//
-//            )
-//        }
+        initializer {
+            HomeViewModel(
+                myNoteApplication().container.noteDao,
+                myNoteApplication().container.myNoteApiService
+            )
+        }
 
         initializer {
             EditorViewModel(
@@ -53,19 +52,6 @@ object AppViewModelProvider {
                 myNoteApplication().container.myNoteApiService
             )
         }
-    }
-
-    fun provideFactory(context: Context) = viewModelFactory {
-        initializer {
-            HomeViewModel(
-                newMyNoteApplication(context).container.noteDao,
-                newMyNoteApplication(context).container.myNoteApiService
-            )
-        }
-    }
-
-    private fun newMyNoteApplication(context: Context): MyNoteApplication {
-        return context.applicationContext as MyNoteApplication
     }
 }
 

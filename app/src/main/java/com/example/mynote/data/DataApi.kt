@@ -295,7 +295,7 @@ object LocalNoteFileApi {
         path: String,
         context: Context
     ) {
-        val dir = File(context.filesDir, "$noteBase/$path")
+        val dir = File(context.filesDir, path)
         if (dir.exists() && dir.isDirectory) {
             val files = dir.listFiles()
             if (files != null) {
@@ -311,7 +311,15 @@ object LocalNoteFileApi {
     }
 
     fun loadFile(path: String, context: Context): File {
-        return File(context.filesDir, "$noteBase/$path")
+        return File(context.filesDir, path)
+    }
+
+    fun loadImage(username: String, fileName: String, context: Context): File {
+        return loadFile("${imageBase(username)}/$fileName", context)
+    }
+
+    fun deleteImage(username: String, fileName: String, context: Context) {
+        deleteFile("${imageBase(username)}/$fileName", context)
     }
 }
 

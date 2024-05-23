@@ -15,6 +15,7 @@ import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
 import com.example.mynote.data.getCurrentTime
+import com.example.mynote.data.noteBase
 import com.example.mynote.network.MyNoteApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,11 +43,6 @@ class HomeViewModel(
             body = listOf(Block(type = BlockType.BODY, data = ""))
         )
         LocalNoteFileApi.saveNote(username, fileName, note, context)
-//        LocalNoteFileApi.saveNote(
-//            "${username}/blocks/$fileName",
-//            note,
-//            context
-//        )
 //        数据库中确认创建分类
         noteDao.insertCategory(CategoryEntity(
             id = 0,
@@ -85,8 +81,10 @@ class HomeViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             //        从数据库中删除所有笔记
             noteDao.deleteAllNotes(username)
-            //        从文件系统中删除所有笔记
-            LocalNoteFileApi.clearDir("${username}/blocks", context)
+            //        从文件系统中删除所有笔记和依赖文件
+            LocalNoteFileApi.clearDir("$noteBase/${username}/blocks", context)
+            LocalNoteFileApi.clearDir("$noteBase/${username}/image", context)
+            LocalNoteFileApi.clearDir("$noteBase/${username}/audio", context)
         }
     }
 

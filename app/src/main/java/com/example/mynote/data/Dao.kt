@@ -19,8 +19,11 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE username = :username ORDER BY lastModifiedTime DESC")
     fun getAllNotes(username: String): List<NoteEntity>
 
-    @Query("SELECT * FROM notes WHERE username = :username AND category = :category AND fileName = :fileName")
-    fun getNoteByName(username: String, category: String, fileName: String): Flow<NoteEntity>
+    @Query("SELECT lastModifiedTime FROM notes WHERE username = :username AND fileName = :fileName")
+    fun getLastModifiedTime(username: String, fileName: String): Flow<String?>
+
+    @Query("SELECT * FROM notes WHERE username = :username AND fileName = :fileName")
+    fun getNoteByName(username: String, fileName: String): Flow<NoteEntity>
 
     @Query("DELETE FROM notes WHERE username = :username AND category = :category")
     suspend fun deleteAllNotesInCategory(username: String, category: String)
@@ -38,10 +41,10 @@ interface NoteDao {
     suspend fun insertNote(note: NoteEntity)
 
     @Update
-    suspend fun update(note: NoteEntity)
+    suspend fun updateNote(note: NoteEntity)
 
     @Delete
-    suspend fun delete(note: NoteEntity)
+    suspend fun deleteNote(note: NoteEntity)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertProfile(profile: ProfileEntity)

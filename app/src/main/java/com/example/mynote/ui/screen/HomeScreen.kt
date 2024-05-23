@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -62,11 +61,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.example.mynote.data.NoteEntity
-import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
@@ -87,15 +84,14 @@ data object HomeRoute {
 @Composable
 fun HomeScreen(
     navigateToCategory: () -> Unit,
-    navigateToEditorScreen: (String) -> Unit,
+    navigateToEditor: (String) -> Unit,
     navigateToProfile: () -> Unit,
     navigateToHome: (String) -> Unit,
     username: String,
     category: String,
     categoryList: List<String>,
     noteList: List<NoteEntity>,
-//    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.provideFactory(LocalContext.current)),
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -211,7 +207,7 @@ fun HomeScreen(
 //                    这里采用创建时间作为文件名（这种设计要求两次创建间隔超过 1s）
                     coroutineScope.launch {
                         val noteFileName = viewModel.createNote(context)
-                        navigateToEditorScreen(noteFileName)
+                        navigateToEditor(noteFileName)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -354,7 +350,7 @@ fun HomeScreen(
 //                        笔记条目
                         Box {
                             Card(
-                                onClick = { /*TODO*/ },
+                                onClick = { navigateToEditor(noteList[index].fileName) },
                                 shape = RoundedCornerShape(8.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -362,7 +358,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .pointerInput(Unit) {
                                         detectTapGestures(
-                                            onTap = {navigateToEditorScreen(noteList[index].fileName)},
+                                            onTap = {navigateToEditor(noteList[index].fileName)},
                                             onLongPress = {showNoteOption = true}
                                         )
                                     }

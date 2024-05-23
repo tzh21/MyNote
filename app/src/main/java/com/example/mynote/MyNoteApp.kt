@@ -1,6 +1,5 @@
 package com.example.mynote
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,7 +73,7 @@ fun MyNoteApp(
             val category = it.arguments?.getString(HomeRoute.category) ?: HomeRoute.defaultCategory
             HomeScreen(
                 navigateToCategory = { navController.navigate("${CategoryRoute.base}/$username/$category") },
-                navigateToEditorScreen = { noteTitle ->
+                navigateToEditor = { noteTitle ->
                     navController.navigate("${EditorRoute.base}/$username/$category/$noteTitle")},
                 navigateToProfile = { navController.navigate("${ProfileRoute.base}/$username") },
                 navigateToHome = { newCategory -> navController.navigate("${HomeRoute.base}/$username/$newCategory") },
@@ -114,7 +113,6 @@ fun MyNoteApp(
             val category = it.arguments?.getString(EditorRoute.category) ?: HomeRoute.defaultCategory
             val noteTitle = it.arguments?.getString(EditorRoute.noteTitle) ?: "null"
             EditorScreen(
-//                navigateUp = { navController.navigateUp() },
                 navigateToHome = { navController.navigate("${HomeRoute.base}/$username/$category") },
                 navigateToEditor = { newCategory, newFileName  ->
                     navController.navigate("${EditorRoute.base}/$username/$newCategory/$newFileName") },

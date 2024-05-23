@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.LocalNoteFileApi
+import com.example.mynote.ui.component.TextFieldDialog
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.CategoryViewModel

@@ -6,14 +6,14 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "notes",
-    indices = [Index(value = ["username", "category", "fileName"], unique = true)]
+    indices = [Index(value = ["username", "fileName"], unique = true)]
 )
 data class NoteEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int,
     val username: String,
-    val category: String,
     val fileName: String,
+    val category: String,
     val title: String,
     val keyword: String, // 正文的第一段
     val coverImage: String, // 封面图片

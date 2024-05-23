@@ -51,6 +51,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.R
+import com.example.mynote.ui.component.TextFieldDialog
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.ProfileViewModel
@@ -251,33 +252,33 @@ fun ProfileScreen(
     }
 }
 
-@Composable
-fun TextFieldDialog(
-    title: String,
-    text: @Composable () -> Unit,
-    onConfirmClick: () -> Unit,
-    onDismissRequest: () -> Unit,
-) {
-    AlertDialog(
-        shape = RectangleShape,
-        title = { Text(text = title) },
-        text = text,
-        onDismissRequest = { },
-        confirmButton = {
-            ProfileButton(
-                onClick = { onConfirmClick() },
-                text = "确定")},
-        dismissButton = {
-            ProfileButton(
-                onClick = { onDismissRequest() },
-                text = "取消",
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface)
-            )
-        }
-    )
-}
+//@Composable
+//fun TextFieldDialog(
+//    title: String,
+//    text: @Composable () -> Unit,
+//    onConfirmClick: () -> Unit,
+//    onDismissRequest: () -> Unit,
+//) {
+//    AlertDialog(
+//        shape = RectangleShape,
+//        title = { Text(text = title) },
+//        text = text,
+//        onDismissRequest = { },
+//        confirmButton = {
+//            ProfileButton(
+//                onClick = { onConfirmClick() },
+//                text = "确定")},
+//        dismissButton = {
+//            ProfileButton(
+//                onClick = { onDismissRequest() },
+//                text = "取消",
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = MaterialTheme.colorScheme.surface,
+//                    contentColor = MaterialTheme.colorScheme.onSurface)
+//            )
+//        }
+//    )
+//}
 
 @Composable
 fun ItemRow(
