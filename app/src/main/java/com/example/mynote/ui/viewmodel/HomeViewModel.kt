@@ -47,7 +47,8 @@ class HomeViewModel(
         noteDao.insertCategory(CategoryEntity(
             id = 0,
             username = username,
-            category = category
+            category = category,
+            lastUsedTime = fileName
         ))
 //        数据库中更新笔记信息
         noteDao.insertNote(NoteEntity(

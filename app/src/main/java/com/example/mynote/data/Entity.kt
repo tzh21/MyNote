@@ -41,4 +41,5 @@ data class CategoryEntity(
     val id: Int = 0,
     val username: String = "",
     val category: String = "",
+    val lastUsedTime: String = ""
 )

@@ -24,6 +24,7 @@ import com.example.mynote.data.NoteLoaderApi
 import com.example.mynote.data.RemoteFileApi
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.network.MyNoteApiService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -67,7 +68,7 @@ class EditorViewModel(
     }
 
     suspend fun saveNote(context: Context) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
     //        本地保存文件
             val note = Note(title = noteTitle, body = noteBody)
             LocalNoteFileApi.saveNote(username, fileName, note, context)
@@ -81,6 +82,7 @@ class EditorViewModel(
                 keyword = bodyString,
                 lastModifiedTime = getCurrentTime()
             ))
+            noteDao.updateCategoryLastUsedTime(username, category, getCurrentTime())
         }
     }
 
@@ -97,17 +99,18 @@ class EditorViewModel(
     var showNewCategoryDialog by mutableStateOf(false)
     fun createCategory(newCategory: String) {
         viewModelScope.launch {
-            noteDao.insertCategory(CategoryEntity(0, username, newCategory))
+            noteDao.insertCategory(CategoryEntity(0, username, newCategory, getCurrentTime()))
         }
     }
 
 //    改变笔记所在的分类
-    fun moveNote(newCategory: String) {
-//        文件系统不做任何变化
-//        改变 viewModel 中的分类
-        category = newCategory
-//        改变数据库中的分类条目
-        viewModelScope.launch {
+    suspend fun moveNote(newCategory: String, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            saveNote(context)
+    //        无需移动文件
+    //        改变 viewModel 中的分类
+            category = newCategory
+    //        改变数据库中的分类条目
             val oldEntity = noteDao.getNoteByName(username, fileName)
                 .filterNotNull()
                 .first()

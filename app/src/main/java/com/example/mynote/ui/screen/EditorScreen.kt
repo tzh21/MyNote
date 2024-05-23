@@ -157,7 +157,7 @@ fun EditorScreen(
                                 onClick = {
                                     coroutineScope.launch {
                                         categoriesExpanded = false
-                                        viewModel.moveNote(categoryItem)
+                                        viewModel.moveNote(categoryItem, context)
                                         navigateToEditor(categoryItem, viewModel.fileName)
                                     }
                                 }

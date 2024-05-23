@@ -1,15 +1,13 @@
 package com.example.mynote.ui.viewmodel
 
-import android.content.Context
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mynote.data.CategoryEntity
-import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.NoteDao
+import com.example.mynote.data.getCurrentTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -30,7 +28,7 @@ class CategoryViewModel(
 
     fun createCategory(newCategory: String) {
         viewModelScope.launch {
-            noteDao.insertCategory(CategoryEntity(0, username, newCategory))
+            noteDao.insertCategory(CategoryEntity(0, username, newCategory, getCurrentTime()))
         }
     }
 

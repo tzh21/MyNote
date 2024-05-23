@@ -68,6 +68,9 @@ interface NoteDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCategory(category: CategoryEntity)
 
-    @Query("SELECT category FROM categories WHERE username = :username")
+    @Query("SELECT category FROM categories WHERE username = :username ORDER BY lastUsedTime DESC")
     fun getAllCategories(username: String): Flow<List<String>>
+
+    @Query("UPDATE categories SET lastUsedTime = :lastUsedTime WHERE username = :username AND category = :category")
+    fun updateCategoryLastUsedTime(username: String, category: String, lastUsedTime: String)
 }
