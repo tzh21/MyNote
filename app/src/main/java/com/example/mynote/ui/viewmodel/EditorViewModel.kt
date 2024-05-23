@@ -49,7 +49,7 @@ class EditorViewModel(
 //    从文件系统中加载笔记
     fun loadNote(context: Context) {
         viewModelScope.launch {
-            note = NoteLoaderApi.loadNote("${username.value}/${category.value}/${fileName.value}", context)
+            note = NoteLoaderApi.loadNote(username.value,"${username.value}/${category.value}/${fileName.value}", context)
 
             noteEntity = noteDao.getNoteByName(username.value, category.value, fileName.value)
                 .filterNotNull()
@@ -70,7 +70,7 @@ class EditorViewModel(
             body = noteBody
         )
 //        更新到文件系统
-        LocalNoteFileApi.saveNote("${username.value}/${category.value}/${fileName.value}", note, context)
+        LocalNoteFileApi.saveNote(username.value, "${username.value}/${category.value}/${fileName.value}", note, context)
 
 //        更新封面图片
         var coverImage = ""
@@ -97,7 +97,7 @@ class EditorViewModel(
 //        本地更新笔记
         saveNote(context)
 //        上传到云端
-        RemoteFileApi.uploadNote(path, context, viewModelScope, apiService)
+        RemoteFileApi.uploadNote(username.value, path, context, viewModelScope, apiService)
     }
 
     var categoryList = mutableStateListOf<String>()
@@ -107,49 +107,61 @@ class EditorViewModel(
         categoryList.addAll(LocalNoteFileApi.listDirs(username.value, context))
     }
 
-    suspend fun moveNote(newCategory: String, context: Context) {
-//        保存更改
-        saveNote(context)
-
-        LocalNoteFileApi.moveFile(
-            "${username.value}/${category.value}/${fileName.value}",
-            "${username.value}/${newCategory}/${fileName.value}",
-            context
-        )
-
-        LocalNoteFileApi.moveDir(
-            "${username.value}/${category.value}/assets/${fileName.value}",
-            "${username.value}/${newCategory}/assets/${fileName.value}",
-            context
-        )
-
-//        更新数据库
-        val currentTime = getCurrentTime()
-        noteDao.update(noteEntity!!.copy(
-            category = newCategory,
-            lastModifiedTime = currentTime
-        ))
-    }
+//    TODO 待更改
+//    suspend fun moveNote(newCategory: String, context: Context) {
+////        保存更改
+//        saveNote(context)
+//
+//        LocalNoteFileApi.moveFile(
+//            "${username.value}/${category.value}/${fileName.value}",
+//            "${username.value}/${newCategory}/${fileName.value}",
+//            context
+//        )
+//
+//        LocalNoteFileApi.moveDir(
+//            "${username.value}/${category.value}/assets/${fileName.value}",
+//            "${username.value}/${newCategory}/assets/${fileName.value}",
+//            context
+//        )
+//
+////        更新数据库
+//        val currentTime = getCurrentTime()
+//        noteDao.update(noteEntity!!.copy(
+//            category = newCategory,
+//            lastModifiedTime = currentTime
+//        ))
+//    }
 
     var currentBlockIndex = mutableStateOf(0)
 
     fun insertResource(uri: Uri, type: BlockType, context: Context) {
-        val currentTime = getCurrentTime()
-        val path =
-            if (type == BlockType.IMAGE)
-                "${username.value}/${category.value}/assets/${fileName.value}/image/$currentTime"
-            else
-                "${username.value}/${category.value}/assets/${fileName.value}/audio/$currentTime"
-        LocalNoteFileApi.saveResource(uri, path, context)
+        val fileName = getCurrentTime()
+//        val path =
+//            if (type == BlockType.IMAGE)
+//                "${username.value}/${category.value}/assets/${fileName.value}/image/$currentTime"
+//            else
+//                "${username.value}/${category.value}/assets/${fileName.value}/audio/$currentTime"
+//        LocalNoteFileApi.saveResource(uri, path, context)
+        when(type) {
+            BlockType.IMAGE -> {
+                LocalNoteFileApi.saveImage(username.value, fileName, uri, context)
+            }
+            BlockType.AUDIO -> {
+                LocalNoteFileApi.saveAudio(username.value, fileName, uri, context)
+            }
+            else -> {
+                throw Exception("Invalid BlockType")
+            }
+        }
 
         var insertIndex = currentBlockIndex.value + 1
 //        当前文本块为空时，插入图片到当前文本块
         if (noteBody[currentBlockIndex.value].type == BlockType.BODY && noteBody[currentBlockIndex.value].data.isEmpty()) {
             insertIndex = currentBlockIndex.value
-            noteBody[insertIndex] = Block(type, path)
+            noteBody[insertIndex] = Block(type, fileName)
         }
         else {
-            noteBody.add(insertIndex, Block(type, path))
+            noteBody.add(insertIndex, Block(type, fileName))
         }
 
 //        在末尾插入空文本块

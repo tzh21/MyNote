@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import com.example.mynote.network.ErrorResponse
 import com.example.mynote.network.MyNoteApiService
 import com.google.gson.Gson
@@ -38,16 +37,20 @@ data class Note(
 
 //笔记文件的根路径
 const val noteBase = "note"
+fun blockBase(username: String) = "$noteBase/$username/blocks"
+fun imageBase(username: String) = "$noteBase/$username/image"
+fun audioBase(username: String) = "$noteBase/$username/audio"
+//const val blockBase = "$noteBase/blocks"
+//const val imageBase = "$noteBase/image"
+//const val audioBase = "$noteBase/audio"
 const val profileBase = "profile"
 
 //本地笔记文件相关操作
 //参数路径为笔记文件系统中的相对路径，以 username 为根目录
 //会在路径前加上 context.filesDir 和 noteBase
 object LocalNoteFileApi {
-    fun createFile(
-        path: String, context: Context
-    ): File {
-        val file = File(context.filesDir, "$noteBase/$path")
+    fun createFile(path: String, context: Context): File {
+        val file = File(context.filesDir, path)
 
         if (!file.exists()) {
             val dir = File(file.parent ?: "")
@@ -60,6 +63,27 @@ object LocalNoteFileApi {
         return file
     }
 
+    fun createNote(
+        username: String,
+        fileName: String, context: Context
+    ): File {
+        return createFile("${blockBase(username)}/$fileName", context)
+    }
+
+    fun createImage(
+        username: String,
+        fileName: String, context: Context
+    ): File {
+        return createFile("${imageBase(username)}/$fileName", context)
+    }
+
+    fun createAudio(
+        username: String,
+        fileName: String, context: Context
+    ): File {
+        return createFile("${audioBase(username)}/$fileName", context)
+    }
+
     fun createDir(
         path: String, context: Context
     ): File {
@@ -70,15 +94,15 @@ object LocalNoteFileApi {
         return dir
     }
 
-    fun writeFile(
-        path: String, byteStream: InputStream,
-        context: Context
-    ) {
-        val file = createFile(path, context)
-        FileOutputStream(file).use { stream ->
-            byteStream.copyTo(stream)
-        }
-    }
+//    fun writeFile(
+//        filaName: String, byteStream: InputStream,
+//        context: Context
+//    ) {
+//        val file = createNote(filaName, context)
+//        FileOutputStream(file).use { stream ->
+//            byteStream.copyTo(stream)
+//        }
+//    }
 
     fun writeAvatar(
         path: String, byteStream: InputStream,
@@ -90,32 +114,30 @@ object LocalNoteFileApi {
         }
     }
 
-    fun moveFile(
-        from: String, to: String,
-        context: Context
-    ) {
-        val oldFile = File(context.filesDir, "$noteBase/$from")
-        if (oldFile.exists()) {
-            val newFile = createFile(to, context)
-            oldFile.renameTo(newFile)
-        }
-    }
+//    fun moveFile(
+//        from: String, to: String,
+//        context: Context
+//    ) {
+//        val oldFile = File(context.filesDir, "$noteBase/$from")
+//        if (oldFile.exists()) {
+//            val newFile = createNote(to, context)
+//            oldFile.renameTo(newFile)
+//        }
+//    }
 
-    fun moveDir(
-        from: String, to: String,
-        context: Context
-    ) {
-        val oldDir = File(context.filesDir, "$noteBase/$from")
-        if (oldDir.exists()) {
-            val newDir = createDir(to, context)
-            oldDir.renameTo(newDir)
-        }
-    }
+//    fun moveDir(
+//        from: String, to: String,
+//        context: Context
+//    ) {
+//        val oldDir = File(context.filesDir, "$noteBase/$from")
+//        if (oldDir.exists()) {
+//            val newDir = createDir(to, context)
+//            oldDir.renameTo(newDir)
+//        }
+//    }
 
-    fun saveNote(
-        path: String, note: Note, context: Context
-    ) {
-        val file = createFile(path, context)
+    fun saveNote(username: String, fileName: String, note: Note, context: Context) {
+        val file = createNote(username, fileName, context)
         val gson = Gson()
         val jsonString = gson.toJson(note)
 
@@ -124,10 +146,8 @@ object LocalNoteFileApi {
         }
     }
 
-    fun saveResource(
-        uri: Uri, path: String, context: Context
-    ) {
-        val file = createFile(path, context)
+    fun saveResource(filePath: String, uri: Uri, context: Context) {
+        val file = createFile(filePath, context)
         val resolver: ContentResolver = context.contentResolver
         val inputStream = resolver.openInputStream(uri)
 
@@ -137,6 +157,28 @@ object LocalNoteFileApi {
             }
         }
     }
+
+    fun saveImage(username: String, fileName: String, uri: Uri, context: Context) {
+        saveResource("${imageBase(username)}/$fileName", uri, context)
+    }
+
+    fun saveAudio(username: String, fileName: String, uri: Uri, context: Context) {
+        saveResource("${audioBase(username)}/$fileName", uri, context)
+    }
+
+//    fun saveResource(
+//        uri: Uri, fileName: String, context: Context
+//    ) {
+//        val file = createFile(path, context)
+//        val resolver: ContentResolver = context.contentResolver
+//        val inputStream = resolver.openInputStream(uri)
+//
+//        inputStream?.use {
+//            FileOutputStream(file).use { outputStream ->
+//                it.copyTo(outputStream)
+//            }
+//        }
+//    }
 
     fun createAvatar(
         path: String, context: Context
@@ -200,11 +242,8 @@ object LocalNoteFileApi {
     }
 
 //    删除文件或目录
-    fun deleteFile(
-        path: String,
-        context: Context
-    ) {
-        val file = File(context.filesDir, "$noteBase/$path")
+    fun deleteFile(path: String, context: Context) {
+        val file = File(context.filesDir, path)
         if (file.exists()) {
             if (file.isFile) {
                 file.delete()
@@ -214,6 +253,42 @@ object LocalNoteFileApi {
             }
         }
     }
+
+//    删除笔记以及其引用的资源文件
+    fun deleteNote(
+        username: String,
+        fileName: String, context: Context
+    ) {
+        val note = NoteLoaderApi.loadNote(username, fileName, context)
+        for (block in note.body) {
+            when (block.type) {
+                BlockType.IMAGE -> {
+                    val resourcePath = block.data
+                    deleteFile("${imageBase(username)}/$resourcePath", context)
+                }
+                BlockType.AUDIO -> {
+                    val resourcePath = block.data
+                    deleteFile("${audioBase(username)}/$resourcePath", context)
+                }
+                else -> {}
+            }
+        }
+        deleteFile("${blockBase(username)}/$fileName", context)
+    }
+
+//    删除笔记所依赖的资源文件
+//    fun deleteResource(username: String, notePath: String, context: Context) {
+//        val note = NoteLoaderApi.loadNote(username, fileName, context)
+//        for (block in note.body) {
+//            if (block.type == BlockType.IMAGE || block.type == BlockType.AUDIO) {
+//                val resourcePath = block.data
+//                val resourceFile = File(context.filesDir, "$noteBase/$resourcePath")
+//                if (resourceFile.exists()) {
+//                    resourceFile.delete()
+//                }
+//            }
+//        }
+//    }
 
 //    清空目录下的文件（不删除目录本身）
     fun clearDir(
@@ -242,25 +317,17 @@ object LocalNoteFileApi {
 
 object NoteLoaderApi {
     //    返回 Note 格式的笔记
-    fun loadNote(
-        path: String,
-        context: Context
-    ): Note {
-        val file = LocalNoteFileApi.loadFile(path, context)
-        Log.d("loadNote", path)
-        var note = Note(
-            title = "未命名",
-            body = mutableStateListOf<Block>()
-        )
+    fun loadNote(username: String, fileName: String, context: Context): Note {
+        val filePath = "${blockBase(username)}/$fileName"
+        val file = LocalNoteFileApi.loadFile(filePath, context)
+        var note: Note? = null
 
         if (file.exists()) {
             val content = file.readText()
-            Log.d("loadNote", content)
-            val gson = Gson()
-            note = gson.fromJson(content, Note::class.java)
+            note = Gson().fromJson(content, Note::class.java)
         }
 
-        return note
+        return note!!
     }
 }
 
@@ -269,17 +336,16 @@ object NoteLoaderApi {
 object RemoteFileApi {
 //    上传单个笔记以及其使用的资源文件（如图片、音频）
     suspend fun uploadNote(
-        path: String,
-        context: Context,
-        coroutineScope: CoroutineScope,
-        apiService: MyNoteApiService
+        username: String, fileName: String, context: Context,
+        coroutineScope: CoroutineScope, apiService: MyNoteApiService
     ) {
         coroutineScope.launch {
 //            上传笔记文件
-            val file = LocalNoteFileApi.loadFile(path, context)
+            val filePath = "${blockBase(username)}/$fileName"
+            val file = LocalNoteFileApi.loadFile(filePath, context)
             val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
             val formData = MultipartBody.Part.createFormData("file", file.name, requestFile)
-            val response = apiService.upload(path, formData)
+            val response = apiService.upload(filePath, formData)
             if (response.isSuccessful) {
                 Log.d("HomeViewModel", "Upload success")
             } else {
@@ -294,7 +360,7 @@ object RemoteFileApi {
             }
 
 //            上传资源文件
-            val note = NoteLoaderApi.loadNote(path, context)
+            val note = NoteLoaderApi.loadNote(username, fileName, context)
             for (block in note.body) {
                 if (block.type == BlockType.IMAGE || block.type == BlockType.AUDIO) {
                     val resourcePath = block.data

@@ -20,11 +20,20 @@ class MyNoteViewModel(
 ): ViewModel() {
     var username by mutableStateOf<String?>(null)
 
+    val categoryList = MutableStateFlow<List<String>>(emptyList())
+    fun loadCategoryList(username: String) {
+        viewModelScope.launch {
+            noteDao.getAllCategories(username)
+                .collect { newCategoryList ->
+                    categoryList.value = newCategoryList
+                }
+        }
+    }
+
 //    key: 分类名称
 //    value: 该分类下的所有笔记元数据
 //    设计成 StateFlow，可以根据数据库的变化自动更新
     val categoryNotesMap = MutableStateFlow<Map<String, List<NoteEntity>>>(emptyMap())
-
     @OptIn(ExperimentalCoroutinesApi::class)
     fun loadCategoryNotesMap(username: String) {
         viewModelScope.launch {

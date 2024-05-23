@@ -35,10 +35,12 @@ fun MyNoteApp(
 ) {
     LaunchedEffect(viewModel.username) {
         if (viewModel.username != null) {
+            viewModel.loadCategoryList(username = viewModel.username!!)
             viewModel.loadCategoryNotesMap(username = viewModel.username!!)
         }
     }
 
+    val categoryList by viewModel.categoryList.collectAsState()
     val categoryNotesMap by viewModel.categoryNotesMap.collectAsState()
 
     NavHost(
@@ -78,6 +80,7 @@ fun MyNoteApp(
                 navigateToHome = { newCategory -> navController.navigate("${HomeRoute.base}/$username/$newCategory") },
                 username = username!!,
                 category = category,
+                categoryList = categoryList,
                 noteList = categoryNotesMap[category] ?: emptyList()
             )
         }

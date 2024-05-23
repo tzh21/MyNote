@@ -1,7 +1,8 @@
 package com.example.mynote.ui.screen
 
 import android.content.res.Configuration
-import android.util.Log
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Person
@@ -53,8 +53,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -62,12 +62,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.NoteEntity
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.theme.Typography
@@ -95,8 +92,10 @@ fun HomeScreen(
     navigateToHome: (String) -> Unit,
     username: String,
     category: String,
+    categoryList: List<String>,
     noteList: List<NoteEntity>,
-    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
+//    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.provideFactory(LocalContext.current)),
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -109,37 +108,315 @@ fun HomeScreen(
         viewModel.category = category
     }
 
-    Scaffold { scaffoldPadding ->
-        Column(
-            modifier = Modifier.padding(scaffoldPadding)
-        ) {
-            Text(text = username)
-            Text(text = category)
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        viewModel.newCreateNote(context)
+    Scaffold(
+        topBar = {
+            MediumTopAppBar(
+                title = { Text(text = "笔记", modifier = Modifier.padding(start = 16.dp)) },
+                navigationIcon = {
+//                    前往用户信息界面
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    ) {
+                        IconButton(
+                            onClick = { navigateToProfile() }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "User profile",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    Row(
+                       modifier = Modifier.padding(8.dp)
+                    ) {
+//                        云同步
+//                        Box {
+//                            val showSyncMenu = remember {
+//                                mutableStateOf(false)
+//                            }
+//
+//                            IconButton(onClick = {
+//                                showSyncMenu.value = true
+//                            }) {
+//                                Icon(
+//                                    imageVector = Icons.Default.Cloud,
+//                                    contentDescription = "Cloud sync",
+//                                    tint = MaterialTheme.colorScheme.primary
+//                                )
+//                            }
+//
+//                            DropdownMenu(
+//                                expanded = showSyncMenu.value,
+//                                onDismissRequest = { showSyncMenu.value = false }
+//                            ) {
+//                                DropdownMenuItem(
+//                                    text = { Text(text = "上传全部笔记") },
+//                                    onClick = {
+//                                        coroutineScope.launch {
+//                                            viewModel.uploadAll(context)
+//                                        }
+//                                    }
+//                                )
+//
+//                                DropdownMenuItem(
+//                                    text = { Text(text = "下载全部笔记") },
+//                                    onClick = {
+//                                        coroutineScope.launch {
+//                                            viewModel.download(context)
+//                                        }
+//                                    }
+//                                )
+//                            }
+//                        }
+
+//                        前往分类界面
+                        IconButton(onClick = { navigateToCategory() }) {
+                            Icon(
+                                imageVector = Icons.Default.Folder,
+                                contentDescription = "Category",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+//                        多选
+                        IconButton(onClick = { }) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircleOutline,
+                                contentDescription = "Multiselect",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        IconButton(onClick = {
+                            coroutineScope.launch {
+                                viewModel.deleteAllNotes(context)
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
+            )
+        },
+//        新建笔记
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+//                    这里采用创建时间作为文件名（这种设计要求两次创建间隔超过 1s）
+                    coroutineScope.launch {
+                        val noteFileName = viewModel.createNote(context)
+                        navigateToEditorScreen(noteFileName)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 32.dp, end = 16.dp)
             ) {
-                Text(text = "添加文件")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Note"
+                )
             }
-            Button(onClick = {
-                coroutineScope.launch {
-                    viewModel.newDeleteAllFiles(context)
+        }
+    ) { scaffoldPadding ->
+        val focusManager = LocalFocusManager.current
+        Box(
+            modifier = Modifier
+                .padding(scaffoldPadding)
+                .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxSize()
+            ) {
+//                搜索框
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(
+                            color = Color(237, 237, 237),
+                            shape = RoundedCornerShape(percent = 50)
+                        )
+                        .height(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = Color.Gray,
+                        modifier = Modifier.padding(start = 12.dp)
+                    )
+                    BasicTextField(
+                        value = viewModel.queryText,
+                        onValueChange = { newValue ->
+                            viewModel.queryText = newValue
+                            viewModel.updateQueryResults()
+                                        },
+                        decorationBox = { innerTextField ->
+                            if (viewModel.queryText.isEmpty()) {
+                                Text(
+                                    text = "搜索",
+                                    style = TextStyle(
+                                        color = Color.Gray,
+                                        fontSize = 16.sp
+                                    ),
+                                )
+                            }
+                            innerTextField()
+                        },
+                        textStyle = TextStyle(
+                            color = Color.Black,
+                            fontSize = 16.sp
+                        ),
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 12.dp)
+                            .weight(5f)
+                            .onFocusChanged { focusState ->
+                                viewModel.isQueryFocused = focusState.isFocused
+                            }
+                    )
+                    Box(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        if (viewModel.queryText.isNotEmpty()) {
+                            IconButton(
+                                onClick = { viewModel.queryText = "" },
+                                modifier = Modifier.padding(end = 12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Delete",
+                                    tint = Color.Gray
+                                )
+                            }
+                        }
+                    }
                 }
-            }) {
-                Text(text = "删除所有文件")
-            }
-            LazyColumn {
-                items(noteList.size) {
-                    Text(text = noteList[it].fileName)
+//                搜索结果
+//                TODO 美化
+                if (viewModel.isQueryFocused) {
+                    val queryNoteList by viewModel.queryResultsStateFlow.collectAsState()
+                    LazyColumn {
+                        items(queryNoteList.size) { index ->
+                            Card(
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp, horizontal = 16.dp)
+                            ) {
+                                Row {
+                                    Text(queryNoteList[index].title)
+                                }
+                            }
+                        }
+                    }
+                }
+                LazyRow(
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    items(categoryList.size) { index ->
+                        FilterChip(
+                            onClick = {
+                                navigateToHome(categoryList[index])
+                                      },
+                            label = {
+                                Text(text = categoryList[index])
+                            },
+                            selected = (categoryList[index] == category),
+                            border = null,
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .height(48.dp)
+                        )
+                    }
+                }
+
+                val orientation = LocalConfiguration.current.orientation
+                LazyVerticalStaggeredGrid(
+                    columns = if (orientation == Configuration.ORIENTATION_PORTRAIT) StaggeredGridCells.Fixed(2)
+                        else StaggeredGridCells.Adaptive(160.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalItemSpacing = 8.dp,
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    items(noteList.size) { index ->
+                        var showNoteOption by remember {
+                            mutableStateOf(false)
+                        }
+
+//                        笔记条目
+                        Box {
+                            Card(
+                                onClick = { /*TODO*/ },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                modifier = Modifier
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(
+                                            onTap = {navigateToEditorScreen(noteList[index].fileName)},
+                                            onLongPress = {showNoteOption = true}
+                                        )
+                                    }
+                            ) {
+                                Column {
+//                                    封面图片
+                                    if (noteList[index].coverImage != "") {
+                                        val imagePath = noteList[index].coverImage
+                                        val file = viewModel.loadFile(imagePath, context)
+                                        if (file.exists()) {
+                                            val bitmap = BitmapFactory.decodeFile(file.absolutePath).asImageBitmap()
+                                            Image(bitmap = bitmap, contentDescription = "Cover image")
+                                        }
+                                    }
+//                                    笔记信息
+                                    Column(
+                                        modifier = Modifier.padding(12.dp)
+                                    ) {
+                                        val noteTitle = noteList[index].title
+                                        Text(
+                                            text = if (noteTitle == "") "未命名" else noteTitle,
+                                            fontSize = Typography.titleLarge.fontSize,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = noteList[index].lastModifiedTime,
+                                            fontSize = Typography.bodyMedium.fontSize,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            DropdownMenu(
+                                expanded = showNoteOption,
+                                onDismissRequest = { showNoteOption = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("删除") },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            viewModel.deleteNote(noteList[index].fileName, context)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-
 }
+
+
 
 //@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 //@Composable

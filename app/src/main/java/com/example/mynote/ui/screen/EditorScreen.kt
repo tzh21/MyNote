@@ -167,14 +167,15 @@ fun EditorScreen(
                                 DropdownMenuItem(
                                     text = { Text(categoryItem) },
                                     onClick = {
-                                        coroutineScope.launch {
-                                            expanded = false
-                                            viewModel.moveNote(
-                                                categoryItem,
-                                                context
-                                            )
-                                            navigateToEditor(categoryItem, viewModel.fileName.value)
-                                        }
+//                                        TODO
+//                                        coroutineScope.launch {
+//                                            expanded = false
+//                                            viewModel.moveNote(
+//                                                categoryItem,
+//                                                context
+//                                            )
+//                                            navigateToEditor(categoryItem, viewModel.fileName.value)
+//                                        }
                                     }
                                 )
                             }
