@@ -65,6 +65,9 @@ interface NoteDao {
     @Query("UPDATE profiles SET nickname = :nickname WHERE username = :username")
     suspend fun updateNickname(username: String, nickname: String)
 
+    @Query("UPDATE profiles SET avatar = :avatar WHERE username = :username")
+    fun updateAvatar(username: String, avatar: String)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCategory(category: CategoryEntity)
 

@@ -30,6 +30,7 @@ data class ProfileEntity(
     val username: String = "",
     val nickname: String = "",
     val motto: String = "",
+    val avatar: String = ""
 )
 
 @Entity(

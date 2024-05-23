@@ -44,6 +44,7 @@ fun audioBase(username: String) = "$noteBase/$username/audio"
 //const val imageBase = "$noteBase/image"
 //const val audioBase = "$noteBase/audio"
 const val profileBase = "profile"
+fun avatarBase(username: String) = "$profileBase/$username/avatar"
 
 //本地笔记文件相关操作
 //参数路径为笔记文件系统中的相对路径，以 username 为根目录
@@ -104,15 +105,15 @@ object LocalNoteFileApi {
 //        }
 //    }
 
-    fun writeAvatar(
-        path: String, byteStream: InputStream,
-        context: Context
-    ) {
-        val file = createAvatar(path, context)
-        FileOutputStream(file).use { stream ->
-            byteStream.copyTo(stream)
-        }
-    }
+//    fun writeAvatar(
+//        path: String, byteStream: InputStream,
+//        context: Context
+//    ) {
+//        val file = createAvatar(path, context)
+//        FileOutputStream(file).use { stream ->
+//            byteStream.copyTo(stream)
+//        }
+//    }
 
 //    fun moveFile(
 //        from: String, to: String,
@@ -180,26 +181,12 @@ object LocalNoteFileApi {
 //        }
 //    }
 
-    fun createAvatar(
-        path: String, context: Context
-    ): File {
-        val file = File(context.filesDir, "$profileBase/$path")
-
-        if (!file.exists()) {
-            val dir = File(file.parent ?: "")
-            if (!dir.exists()) {
-                dir.mkdirs()
-            }
-            file.createNewFile()
-        }
-
-        return file
+    fun createAvatar(username: String, fileName: String, context: Context): File {
+        return createFile("${avatarBase(username)}/$fileName", context)
     }
 
-    fun saveAvatar(
-        uri: Uri, path: String, context: Context
-    ) {
-        val file = createAvatar(path, context)
+    fun saveAvatar(uri: Uri, username: String, fileName: String, context: Context) {
+        val file = createAvatar(username, fileName, context)
         val resolver: ContentResolver = context.contentResolver
         val inputStream = resolver.openInputStream(uri)
 
@@ -210,10 +197,8 @@ object LocalNoteFileApi {
         }
     }
 
-    fun loadAvatar(
-        path: String, context: Context
-    ): File {
-        return File(context.filesDir, "$profileBase/$path")
+    fun loadAvatar(username: String, fileName: String, context: Context): File {
+        return loadFile("${avatarBase(username)}/$fileName", context)
     }
 
     //返回 path 下的所有目录名（不包括文件）
@@ -401,32 +386,32 @@ object RemoteFileApi {
         }
     }
 
-    suspend fun uploadAvatar(
-        username: String,
-        context: Context,
-        coroutineScope: CoroutineScope,
-        apiService: MyNoteApiService
-    ) {
-        coroutineScope.launch {
-            val path = "$username/avatar"
-            val file = LocalNoteFileApi.loadAvatar(path, context)
-            val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
-            val formData = MultipartBody.Part.createFormData("avatar", file.name, requestFile)
-            val response = apiService.postAvatar(username, formData)
-            if (response.isSuccessful) {
-                Log.d("HomeViewModel", "Upload avatar success")
-            } else {
-                val errorBody = response.errorBody()?.string()
-                val errorDetail = if (errorBody != null) {
-                    Json.decodeFromString<ErrorResponse>(errorBody).error
-                } else {
-                    "Unknown error"
-                }
-
-                Log.d("HomeViewModel", errorDetail)
-            }
-        }
-    }
+//    suspend fun uploadAvatar(
+//        username: String,
+//        context: Context,
+//        coroutineScope: CoroutineScope,
+//        apiService: MyNoteApiService
+//    ) {
+//        coroutineScope.launch {
+//            val path = "$username/avatar"
+//            val file = LocalNoteFileApi.loadAvatar(path, context)
+//            val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+//            val formData = MultipartBody.Part.createFormData("avatar", file.name, requestFile)
+//            val response = apiService.postAvatar(username, formData)
+//            if (response.isSuccessful) {
+//                Log.d("HomeViewModel", "Upload avatar success")
+//            } else {
+//                val errorBody = response.errorBody()?.string()
+//                val errorDetail = if (errorBody != null) {
+//                    Json.decodeFromString<ErrorResponse>(errorBody).error
+//                } else {
+//                    "Unknown error"
+//                }
+//
+//                Log.d("HomeViewModel", errorDetail)
+//            }
+//        }
+//    }
 }
 
 //object LocalFileDebugApi {

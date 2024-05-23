@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.Config
 import com.example.mynote.R
+import com.example.mynote.ui.component.MaxWidthButton
 import com.example.mynote.ui.component.MyNoteTopBar
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
@@ -133,12 +135,13 @@ fun LoginScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.padding(8.dp))
+
                 if (Config.isDebug) {
-                    Button(onClick = {
-                        viewModel.defaultLogin()
-                    }) {
-                        Text(text = "默认用户登录")
-                    }
+                    MaxWidthButton(
+                        onClick = { viewModel.defaultLogin() },
+                        text = "默认用户登录"
+                    )
                 }
 
                 if (uiState.value.status != LoginStatus.INACTIVE) {
@@ -168,7 +171,6 @@ fun LoginScreen(
                         when (uiState.value.status) {
                             LoginStatus.SUCCESS -> {
                                 StatusText("登录成功")
-//                                setUsername(uiState.value.username)
                                 navigateToHome(uiState.value.username)
                             }
                             LoginStatus.ERROR -> {

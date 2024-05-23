@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -11,7 +12,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -22,8 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
@@ -36,7 +34,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,9 +51,9 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.R
+import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.ui.component.MaxWidthButton
 import com.example.mynote.ui.component.TextFieldDialog
-import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
@@ -74,11 +74,16 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
 
-    viewModel.username.value = username
-    viewModel.initProfileStateFlow()
-    viewModel.initAvatar(context)
+    viewModel.username = username
 
-    val profileState = viewModel.profileStateFlow.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.initProfileStateFlow()
+        viewModel.insertProfile()
+    }
+
+//    profileEntity 包含用户的所有信息
+//    其中头像部分为路径，需要访问文件系统获得图片本身
+    val profileEntity by viewModel.profileStateFlow.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
@@ -99,9 +104,9 @@ fun ProfileScreen(
                     }},
                 actions = {
                     IconButton(onClick = {
-                        coroutineScope.launch {
-                            viewModel.downloadProfile(context)
-                        }
+//                        coroutineScope.launch {
+//                            viewModel.downloadProfile(context)
+//                        }
                     }) {
                         Icon(
                             imageVector = Icons.Default.CloudDownload,
@@ -138,24 +143,25 @@ fun ProfileScreen(
             ) {
                 Text("头像")
                 Spacer(modifier = Modifier.weight(1f))
-                val avatarByteArray = viewModel.avatarByteArray.value
-                if (avatarByteArray.isNotEmpty()) {
-                    Card(
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        val avatarBitmap = BitmapFactory.decodeByteArray(avatarByteArray, 0, avatarByteArray.size).asImageBitmap()
-                        Image(
-                            bitmap = avatarBitmap,
-                            contentDescription = "Avatar",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .height(64.dp)
-                                .width(64.dp)
-                        )
+                if (profileEntity.avatar.isNotEmpty()) {
+                    val avatarFile = LocalNoteFileApi.loadAvatar(viewModel.username, profileEntity.avatar, context)
+                    if (avatarFile.exists()) {
+                        val avatarBitmap = BitmapFactory.decodeFile(avatarFile.absolutePath).asImageBitmap()
+                        Card(
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Image(
+                                bitmap = avatarBitmap,
+                                contentDescription = "Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .height(64.dp)
+                                    .width(64.dp)
+                            )
+                        }
+                    } else {
+                        Text(text = "未设置", color = Color.Gray)
                     }
-                }
-                else {
-                    Text(text = "未设置", color = Color.Gray)
                 }
             }
             Divider(thickness = 1.dp)
@@ -170,8 +176,8 @@ fun ProfileScreen(
             ) {
                 Text(text = "昵称", modifier = Modifier.widthIn(100.dp))
                 Spacer(modifier = Modifier.weight(1f))
-                if (profileState.value.nickname.isNotEmpty()) {
-                    Text(text = profileState.value.nickname)
+                if (profileEntity.nickname.isNotEmpty()) {
+                    Text(text = profileEntity.nickname)
                 } else {
                     Text(text = "未设置", color = Color.Gray)
                 }
@@ -182,10 +188,10 @@ fun ProfileScreen(
             ) {
                 Text(text = "个性签名", modifier = Modifier.widthIn(100.dp))
                 Spacer(modifier = Modifier.weight(1f))
-                if (profileState.value.motto.isEmpty()) {
-                    Text(text = "点击设置个性签名", color = Color.Gray)
+                if (profileEntity.motto.isEmpty()) {
+                    Text(text = "未设置", color = Color.Gray)
                 } else {
-                    Text(text = profileState.value.motto)
+                    Text(text = profileEntity.motto)
                 }
             }
             Divider(thickness = 1.dp)
@@ -205,7 +211,7 @@ fun ProfileScreen(
 
         if (viewModel.showMottoDialog.value) {
             val tempMotto = rememberSaveable {
-                mutableStateOf(profileState.value.motto)
+                mutableStateOf(profileEntity.motto)
             }
             TextFieldDialog(
                 title = "修改个性签名",
@@ -224,7 +230,7 @@ fun ProfileScreen(
 
         if (viewModel.showNicknameDialog.value) {
             val tempNickname = rememberSaveable {
-                mutableStateOf(profileState.value.nickname)
+                mutableStateOf(profileEntity.nickname)
             }
             TextFieldDialog(
                 title = "修改昵称",
@@ -241,7 +247,7 @@ fun ProfileScreen(
             )
         }
 
-        if (viewModel.isSyncing.value) {
+        if (viewModel.isSyncing) {
             AlertDialog(
                 shape = RectangleShape,
                 title = { Text(text = "同步中") },
