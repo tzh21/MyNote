@@ -16,10 +16,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -57,6 +61,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
@@ -81,10 +86,13 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
 import com.example.mynote.data.LocalNoteFileApi
+import com.example.mynote.data.getCurrentTime
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
 import java.io.File
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 data object EditorRoute {
     const val base = "note"
@@ -123,87 +131,87 @@ fun EditorScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {  },
-                navigationIcon = {
-                    IconButton(onClick = {
+            Column {
+                TopAppBar(
+                    title = {  },
+                    navigationIcon = {
+                        IconButton(onClick = {
                             coroutineScope.launch {
                                 viewModel.saveNote(context)
                                 navigateToHome()
                             }
                         },
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Home,
-                            contentDescription = "Back to home",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                },
-                actions = {
-                    var expanded by remember { mutableStateOf(false) }
-                    viewModel.initCategoryList(context)
-                    Row(
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        AssistChip(
-                            onClick = {
-                                expanded = true
-                                      },
-                            label = { Text(text = viewModel.category.value) },
-                            border = null,
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            ),
-                            modifier = Modifier.padding(end = 8.dp),
-                        )
-
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = {expanded = false}
+                            modifier = Modifier.padding(start = 8.dp)
                         ) {
-                            viewModel.categoryList.forEach { categoryItem ->
-                                DropdownMenuItem(
-                                    text = { Text(categoryItem) },
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            expanded = false
-                                            viewModel.moveNote(
-                                                categoryItem,
-                                                context
-                                            )
-                                            navigateToEditor(categoryItem, viewModel.fileName.value)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-
-                        IconButton(onClick = {
-                            coroutineScope.launch {
-                                viewModel.upload("${viewModel.username.value}/${viewModel.category.value}/${viewModel.fileName.value}", context)
-                            }
-                        }) {
                             Icon(
-                                imageVector = Icons.Default.CloudUpload,
-                                contentDescription = "Cloud upload",
+                                imageVector = Icons.Filled.Home,
+                                contentDescription = "Back to home",
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
+                    },
+                    actions = {
+                        var expanded by remember { mutableStateOf(false) }
+                        viewModel.initCategoryList(context)
+                        Row(
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            AssistChip(
+                                onClick = {
+                                    expanded = true
+                                },
+                                label = { Text(text = viewModel.category.value) },
+                                border = null,
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                ),
+                                modifier = Modifier.padding(end = 8.dp),
+                            )
+
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = {expanded = false}
+                            ) {
+                                viewModel.categoryList.forEach { categoryItem ->
+                                    DropdownMenuItem(
+                                        text = { Text(categoryItem) },
+                                        onClick = {
+                                            coroutineScope.launch {
+                                                expanded = false
+                                                viewModel.moveNote(
+                                                    categoryItem,
+                                                    context
+                                                )
+                                                navigateToEditor(categoryItem, viewModel.fileName.value)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+
+                            IconButton(onClick = {
+                                coroutineScope.launch {
+                                    viewModel.upload("${viewModel.username.value}/${viewModel.category.value}/${viewModel.fileName.value}", context)
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.CloudUpload,
+                                    contentDescription = "Cloud upload",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
-                }
-            )
-        },
-        bottomBar = {
-            Column {
+                )
                 Divider(thickness = 1.dp, color = Color.LightGray)
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 8.dp)
                         .padding(bottom = 6.dp)
+                        .fillMaxWidth()
                 ) {
                     CameraButton { uri ->
                         viewModel.insertImage(uri, context)
@@ -221,8 +229,10 @@ fun EditorScreen(
                         viewModel.insertAudio(uri, context)
                     }
                 }
+
             }
-        },
+
+        }
     ) { scaffoldPadding ->
         val focusManager = LocalFocusManager.current
         Box(
@@ -265,8 +275,15 @@ fun EditorScreen(
 
 //                    修改时间
                     item {
+                        val currentTime = getCurrentTime()
+                        val lastModifiedTime = viewModel.noteEntity?.lastModifiedTime ?: "未知"
+                        var formattedTime = "未知"
+                        if (areDatesEqual(lastModifiedTime,currentTime)){
+                            val trimmedTimePart = lastModifiedTime.substring(10).dropLast(2)
+                            formattedTime = trimmedTimePart.dropLast(2) + ":" + trimmedTimePart.takeLast(2)
+                        }
                         Text(
-                            "上次修改：${viewModel.noteEntity?.lastModifiedTime ?: "未知"}",
+                            "上次修改：${formattedTime}",
                             style = TextStyle(color = Color.LightGray),
                             modifier = Modifier.padding(top = 12.dp)
                         )
@@ -608,6 +625,20 @@ fun removeBlock(
     LocalNoteFileApi.deleteFile(imagePath, context)
 }
 
+fun areDatesEqual(date1: String, date2: String): Boolean {
+    val formattedDate1 = extractDatePart(date1)
+    val formattedDate2 = extractDatePart(date2)
+
+    return formattedDate1 == formattedDate2
+}
+
+fun extractDatePart(dateString: String): String? {
+    return if (dateString.length >= 10) {
+        dateString.substring(0, 10)
+    } else {
+        null
+    }
+}
 // 后续考虑使用的富文本编辑器，暂时不用删
 //@Composable
 //fun RichEditor() {

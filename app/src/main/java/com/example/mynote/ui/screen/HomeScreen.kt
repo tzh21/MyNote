@@ -493,3 +493,21 @@ fun SearchField() {
         }
     }
 }
+
+fun formatDateTime(dateTime: String): String {
+    // 检查字符串是否符合预期长度
+    if (dateTime.length != 17) {
+        return "格式错误"
+    }
+
+    // 提取各个部分
+    val year = dateTime.substring(0, 4)
+    val month = dateTime.substring(4, 6)
+    val day = dateTime.substring(6, 8)
+    val hour = dateTime.substring(9, 11)
+    val minute = dateTime.substring(11, 13)
+    val second = dateTime.substring(13, 15)
+
+    // 组合成期望的格式
+    return "$year-$month-$day-$hour:$minute:$second"
+}
