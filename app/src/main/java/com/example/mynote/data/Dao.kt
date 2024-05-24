@@ -47,6 +47,26 @@ interface NoteDao {
     @Update
     suspend fun updateNote(note: NoteEntity)
 
+    @Query("UPDATE notes SET title = :title WHERE username = :username AND fileName = :fileName")
+    suspend fun updateTitle(username: String, fileName: String, title: String)
+
+//    val category: String,
+//    val title: String = "",
+//    val keyword: String = "", // 正文的第一段
+//    val coverImage: String = "", // 封面图片
+//    val lastModifiedTime: String = ""
+    @Query("""
+        UPDATE notes SET
+            category = :category, title = :title, keyword = :keyword,
+            coverImage = :coverImage, lastModifiedTime = :lastModifiedTime
+        WHERE username = :username AND fileName = :fileName
+    """)
+    suspend fun updateNoteInfo(
+        username: String, fileName: String,
+        category: String, title: String, keyword: String,
+        coverImage: String, lastModifiedTime: String
+    )
+
     @Delete
     suspend fun deleteNote(note: NoteEntity)
 
@@ -67,6 +87,13 @@ interface NoteDao {
 
     @Query("UPDATE profiles SET avatar = :avatar WHERE username = :username")
     fun updateAvatar(username: String, avatar: String)
+
+    @Query("""
+        UPDATE profiles SET
+            motto = :motto, nickname = :nickname, avatar = :avatar
+        WHERE username = :username
+    """)
+    fun updateProfile(username: String, motto: String, nickname: String, avatar: String)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCategory(category: CategoryEntity)

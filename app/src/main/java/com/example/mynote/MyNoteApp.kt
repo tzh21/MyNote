@@ -50,15 +50,8 @@ fun MyNoteApp(
                 navigateToHome = { loginUsername ->
                     viewModel.username = loginUsername
                     navController.navigate("${HomeRoute.base}/$loginUsername/${HomeRoute.defaultCategory}") },
-//                navigateToSignup = { navController.navigate(SignupRoute) },
             )
         }
-
-//        composable(route = SignupRoute) {
-//            SignupScreen(
-//                navigateToHome = { navController.navigate("${HomeRoute.base}/$it/${HomeRoute.defaultCategory}") }
-//            )
-//        }
 
         composable(
             route = HomeRoute.complete,

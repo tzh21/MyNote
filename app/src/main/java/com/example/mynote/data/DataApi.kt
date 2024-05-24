@@ -4,18 +4,19 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.example.mynote.network.AvatarNameRequest
 import com.example.mynote.network.ErrorResponse
 import com.example.mynote.network.MyNoteApiService
+import com.example.mynote.network.ProfileResponse
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -40,9 +41,6 @@ const val noteBase = "note"
 fun blockBase(username: String) = "$noteBase/$username/blocks"
 fun imageBase(username: String) = "$noteBase/$username/image"
 fun audioBase(username: String) = "$noteBase/$username/audio"
-//const val blockBase = "$noteBase/blocks"
-//const val imageBase = "$noteBase/image"
-//const val audioBase = "$noteBase/audio"
 const val profileBase = "profile"
 fun avatarBase(username: String) = "$profileBase/$username/avatar"
 
@@ -85,58 +83,6 @@ object LocalNoteFileApi {
         return createFile("${audioBase(username)}/$fileName", context)
     }
 
-    fun createDir(
-        path: String, context: Context
-    ): File {
-        val dir = File(context.filesDir, "$noteBase/$path")
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-        return dir
-    }
-
-//    fun writeFile(
-//        filaName: String, byteStream: InputStream,
-//        context: Context
-//    ) {
-//        val file = createNote(filaName, context)
-//        FileOutputStream(file).use { stream ->
-//            byteStream.copyTo(stream)
-//        }
-//    }
-
-//    fun writeAvatar(
-//        path: String, byteStream: InputStream,
-//        context: Context
-//    ) {
-//        val file = createAvatar(path, context)
-//        FileOutputStream(file).use { stream ->
-//            byteStream.copyTo(stream)
-//        }
-//    }
-
-//    fun moveFile(
-//        from: String, to: String,
-//        context: Context
-//    ) {
-//        val oldFile = File(context.filesDir, "$noteBase/$from")
-//        if (oldFile.exists()) {
-//            val newFile = createNote(to, context)
-//            oldFile.renameTo(newFile)
-//        }
-//    }
-
-//    fun moveDir(
-//        from: String, to: String,
-//        context: Context
-//    ) {
-//        val oldDir = File(context.filesDir, "$noteBase/$from")
-//        if (oldDir.exists()) {
-//            val newDir = createDir(to, context)
-//            oldDir.renameTo(newDir)
-//        }
-//    }
-
     fun saveNote(username: String, fileName: String, note: Note, context: Context) {
         val file = createNote(username, fileName, context)
         val gson = Gson()
@@ -167,20 +113,6 @@ object LocalNoteFileApi {
         saveResource("${audioBase(username)}/$fileName", uri, context)
     }
 
-//    fun saveResource(
-//        uri: Uri, fileName: String, context: Context
-//    ) {
-//        val file = createFile(path, context)
-//        val resolver: ContentResolver = context.contentResolver
-//        val inputStream = resolver.openInputStream(uri)
-//
-//        inputStream?.use {
-//            FileOutputStream(file).use { outputStream ->
-//                it.copyTo(outputStream)
-//            }
-//        }
-//    }
-
     fun createAvatar(username: String, fileName: String, context: Context): File {
         return createFile("${avatarBase(username)}/$fileName", context)
     }
@@ -199,17 +131,6 @@ object LocalNoteFileApi {
 
     fun loadAvatar(username: String, fileName: String, context: Context): File {
         return loadFile("${avatarBase(username)}/$fileName", context)
-    }
-
-    //返回 path 下的所有目录名（不包括文件）
-    fun listDirs(
-        path: String,
-        context: Context,
-    ): List<String> {
-        val dirs = File(context.filesDir, "$noteBase/$path").listFiles()
-        val dirNames = dirs?.filter { it.isDirectory }?.map { it.name } ?: listOf()
-
-        return dirNames
     }
 
     //返回 path 下的所有文件名（不包括目录）
@@ -261,20 +182,6 @@ object LocalNoteFileApi {
         deleteFile("${blockBase(username)}/$fileName", context)
     }
 
-//    删除笔记所依赖的资源文件
-//    fun deleteResource(username: String, notePath: String, context: Context) {
-//        val note = NoteLoaderApi.loadNote(username, fileName, context)
-//        for (block in note.body) {
-//            if (block.type == BlockType.IMAGE || block.type == BlockType.AUDIO) {
-//                val resourcePath = block.data
-//                val resourceFile = File(context.filesDir, "$noteBase/$resourcePath")
-//                if (resourceFile.exists()) {
-//                    resourceFile.delete()
-//                }
-//            }
-//        }
-//    }
-
 //    清空目录下的文件（不删除目录本身）
     fun clearDir(
         path: String,
@@ -299,6 +206,10 @@ object LocalNoteFileApi {
         return File(context.filesDir, path)
     }
 
+    fun loadNoteFile(username: String, fileName: String, context: Context): File {
+        return loadFile("${blockBase(username)}/$fileName", context)
+    }
+
     fun loadImage(username: String, fileName: String, context: Context): File {
         return loadFile("${imageBase(username)}/$fileName", context)
     }
@@ -314,6 +225,39 @@ object LocalNoteFileApi {
     fun deleteAudio(username: String, fileName: String, context: Context) {
         deleteFile("${audioBase(username)}/$fileName", context)
     }
+
+//    更新数据库中笔记的信息
+//    val title: String = "",
+//    val keyword: String = "", // 正文的第一段
+//    val coverImage: String = "", // 封面图片
+//    val lastModifiedTime: String = ""
+suspend fun updateNoteEntity(
+    username: String, fileName: String,
+    category: String, note: Note, noteDao: NoteDao
+) {
+    val noteTitle = note.title
+    val noteBody = note.body
+
+    var bodyString = ""
+    for (block in noteBody) {
+        bodyString += "${block.data} \n"
+    }
+
+    var coverImage = ""
+    for (block in noteBody) {
+        if (block.type == BlockType.IMAGE) {
+            coverImage = block.data
+            break
+        }
+    }
+
+    noteDao.updateNoteInfo(
+        username, fileName,
+        category, noteTitle, bodyString,
+        coverImage, getCurrentTime()
+    )
+}
+
 }
 
 object NoteLoaderApi {
@@ -335,117 +279,180 @@ object NoteLoaderApi {
 //远程笔记文件相关操作
 //和服务器通信中使用的 path 是相对路径，不包含 noteBase 和 filesDir
 object RemoteFileApi {
-//    上传单个笔记以及其使用的资源文件（如图片、音频）
+    //    上传单个笔记以及其使用的资源文件（如图片、音频）
     suspend fun uploadNote(
         username: String, fileName: String, context: Context,
         coroutineScope: CoroutineScope, apiService: MyNoteApiService
     ) {
         coroutineScope.launch {
-//            上传笔记文件
-            val filePath = "${blockBase(username)}/$fileName"
-            val file = LocalNoteFileApi.loadFile(filePath, context)
-            val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
-            val formData = MultipartBody.Part.createFormData("file", file.name, requestFile)
-            val response = apiService.upload(filePath, formData)
-            if (response.isSuccessful) {
-                Log.d("HomeViewModel", "Upload success")
+            try {
+//                上传笔记文件
+                val file = LocalNoteFileApi.loadNoteFile(username, fileName, context)
+                val requestBody = file.asRequestBody("application/json".toMediaTypeOrNull())
+                val response = apiService.uploadBlocks(username, fileName, requestBody)
+                if (response.isSuccessful) {
+//                    上传资源文件
+                    val noteBody = NoteLoaderApi.loadNote(username, fileName, context).body
+                    for (block in noteBody) {
+                        val resourceFileName = block.data
+                        Log.d("RemoteFileApi", "resourcePath: $resourceFileName")
+                        when (block.type) {
+                            BlockType.IMAGE -> {
+                                val resourceFile =
+                                    LocalNoteFileApi.loadImage(username, resourceFileName, context)
+                                val requestFile =
+                                    resourceFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                                val resourceResponse =
+                                    apiService.uploadImage(username, resourceFileName, requestFile)
+                                if (!resourceResponse.isSuccessful) {
+                                    throw Exception("fail to upload image")
+                                }
+                            }
+
+                            BlockType.AUDIO -> {
+                                val resourceFile =
+                                    LocalNoteFileApi.loadAudio(username, resourceFileName, context)
+                                val requestFile =
+                                    resourceFile.asRequestBody("audio/mpeg".toMediaTypeOrNull())
+                                val resourceResponse =
+                                    apiService.uploadAudio(username, resourceFileName, requestFile)
+                                if (!resourceResponse.isSuccessful) {
+                                    throw Exception("fail to upload audio")
+                                }
+                            }
+
+                            else -> {}
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.d("RemoteFileApi", e.message.toString())
+            }
+        }
+    }
+
+    //    下载单个笔记以及其使用的资源文件（如图片、音频）
+    suspend fun downloadNote(
+        username: String, fileName: String, category: String, context: Context,
+        coroutineScope: CoroutineScope, apiService: MyNoteApiService,
+        noteDao: NoteDao
+    ) {
+        coroutineScope.launch(Dispatchers.IO) {
+            val fileResponse = apiService.getBlocks(username, fileName)
+            if (fileResponse.isSuccessful) {
+                val blocksBody = fileResponse.body()!!
+                val noteFile = LocalNoteFileApi.createNote(username, fileName, context)
+                FileOutputStream(noteFile).use { stream ->
+                    stream.write(blocksBody.bytes())
+                }
+
+                //            资源文件
+                val note = NoteLoaderApi.loadNote(username, fileName, context)
+                val noteTitle = note.title
+                val noteBody = note.body
+                for (block in noteBody) {
+                    val resourceFileName = block.data
+                    when (block.type) {
+                        BlockType.IMAGE -> {
+                            val resourceFile =
+                                LocalNoteFileApi.createImage(username, resourceFileName, context)
+                            val resourceResponse = apiService.getImage(username, resourceFileName)
+                            if (resourceResponse.isSuccessful) {
+                                FileOutputStream(resourceFile).use { stream ->
+                                    stream.write(resourceResponse.body()!!.bytes())
+                                }
+                            } else {
+                                Log.d("RemoteFileApi", "Fail to download resource file")
+                            }
+                        }
+
+                        BlockType.AUDIO -> {
+                            val resourceFile =
+                                LocalNoteFileApi.createAudio(username, resourceFileName, context)
+                            val resourceResponse = apiService.getAudio(username, resourceFileName)
+                            if (resourceResponse.isSuccessful) {
+                                FileOutputStream(resourceFile).use { stream ->
+                                    stream.write(resourceResponse.body()!!.bytes())
+                                }
+                            } else {
+                                Log.d("RemoteFileApi", "Fail to download resource file")
+                            }
+                        }
+
+                        else -> {}
+                    }
+                }
+
+                noteDao.insertNote(
+                    NoteEntity(
+                        username = username,
+                        category = category,
+                        fileName = fileName,
+                    )
+                )
+                LocalNoteFileApi.updateNoteEntity(username, fileName, category, note, noteDao)
+                noteDao.updateTitle(username, fileName, noteTitle)
             } else {
-                val errorBody = response.errorBody()?.string()
+                val errorBody = fileResponse.errorBody()?.string()
                 val errorDetail = if (errorBody != null) {
                     Json.decodeFromString<ErrorResponse>(errorBody).error
                 } else {
                     "Unknown error"
                 }
 
-                Log.d("HomeViewModel", errorDetail)
-            }
-
-//            上传资源文件
-            val note = NoteLoaderApi.loadNote(username, fileName, context)
-            for (block in note.body) {
-                if (block.type == BlockType.IMAGE || block.type == BlockType.AUDIO) {
-                    val resourcePath = block.data
-                    val resourceFile = LocalNoteFileApi.loadFile(resourcePath, context)
-                    val resourceRequestFile = resourceFile.asRequestBody("multipart/form-data".toMediaTypeOrNull())
-                    val resourceFormData = MultipartBody.Part.createFormData("file", resourceFile.name, resourceRequestFile)
-                    val resourceResponse = apiService.upload(resourcePath, resourceFormData)
-                    if (resourceResponse.isSuccessful) {
-                        Log.d("HomeViewModel", "Upload resource success")
-                    } else {
-                        val errorBody = resourceResponse.errorBody()?.string()
-                        val errorDetail = if (errorBody != null) {
-                            Json.decodeFromString<ErrorResponse>(errorBody).error
-                        } else {
-                            "Unknown error"
-                        }
-
-                        Log.d("HomeViewModel", errorDetail)
-                    }
-                }
+                Log.d("RemoteFileApi", errorDetail)
             }
         }
     }
 
-//    suspend fun uploadAvatar(
-//        username: String,
-//        context: Context,
-//        coroutineScope: CoroutineScope,
-//        apiService: MyNoteApiService
-//    ) {
-//        coroutineScope.launch {
-//            val path = "$username/avatar"
-//            val file = LocalNoteFileApi.loadAvatar(path, context)
-//            val requestFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
-//            val formData = MultipartBody.Part.createFormData("avatar", file.name, requestFile)
-//            val response = apiService.postAvatar(username, formData)
-//            if (response.isSuccessful) {
-//                Log.d("HomeViewModel", "Upload avatar success")
-//            } else {
-//                val errorBody = response.errorBody()?.string()
-//                val errorDetail = if (errorBody != null) {
-//                    Json.decodeFromString<ErrorResponse>(errorBody).error
-//                } else {
-//                    "Unknown error"
-//                }
-//
-//                Log.d("HomeViewModel", errorDetail)
-//            }
-//        }
-//    }
-}
+    suspend fun uploadAvatar(
+        username: String, fileName: String, context: Context,
+        coroutineScope: CoroutineScope, apiService: MyNoteApiService
+    ) {
+        coroutineScope.launch {
+            try {
+                val response = apiService.postAvatarName(username, AvatarNameRequest(fileName))
+                if (response.isSuccessful) {
+                    val file = LocalNoteFileApi.loadAvatar(username, fileName, context)
+                    val requestBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                    apiService.postAvatar(username, fileName, requestBody)
+                }
+            } catch (e: Exception) {
+                Log.d("RemoteFileApi", e.message.toString())
+            }
+        }
+    }
 
-//object LocalFileDebugApi {
-//    fun printFileContent(
-//        path: String,
-//        context: Context,
-//    ) {
-//        val root = context.filesDir
-//        val file = File(root, path)
-//        if (file.exists()) {
-//            val content = file.readText()
-//            Log.d("printFileContent", content)
-//        } else {
-//            Log.d("printFileContent", "文件不存在")
-//        }
-//    }
-//
-//    fun printFilenames(
-//        path: String,
-//        context: Context,
-//    ) {
-//        val root = context.filesDir
-//        val filesDir = File(root, path)
-//        val files = filesDir.listFiles()
-//
-//        if (files != null) {
-//            for (file in files) {
-//                Log.d("printFilenames", file.name)
-//            }
-//        } else {
-//            Log.d("printFilenames", "文件目录为空")
-//        }
-//    }
-//}
+    suspend fun updateProfile(
+        username: String, profileResponseBody: ProfileResponse, context: Context,
+        coroutineScope: CoroutineScope,
+        apiService: MyNoteApiService,
+        noteDao: NoteDao
+    ) {
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val fileName = profileResponseBody.avatar
+                val response = apiService.getAvatar(username, fileName)
+                if (response.isSuccessful) {
+                    val file = LocalNoteFileApi.createAvatar(username, fileName, context)
+                    FileOutputStream(file).use { stream ->
+                        stream.write(response.body()!!.bytes())
+                    }
+                }
+            } catch (e: Exception) {
+                Log.d("RemoteFileApi", e.message.toString())
+            }
+
+            noteDao.insertProfile(ProfileEntity(username = username))
+            noteDao.updateProfile(
+                username,
+                profileResponseBody.motto,
+                profileResponseBody.nickname,
+                profileResponseBody.avatar
+            )
+        }
+    }
+}
 
 fun getCurrentTime(): String {
     val currentDateTime = LocalDateTime.now()

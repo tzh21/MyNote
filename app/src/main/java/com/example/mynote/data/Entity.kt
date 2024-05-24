@@ -10,14 +10,14 @@ import androidx.room.PrimaryKey
 )
 data class NoteEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Int,
+    val id: Int = 0,
     val username: String,
     val fileName: String,
     val category: String,
-    val title: String,
-    val keyword: String, // 正文的第一段
-    val coverImage: String, // 封面图片
-    val lastModifiedTime: String
+    val title: String = "",
+    val keyword: String = "", // 正文的第一段
+    val coverImage: String = "", // 封面图片
+    val lastModifiedTime: String = ""
 )
 
 @Entity(

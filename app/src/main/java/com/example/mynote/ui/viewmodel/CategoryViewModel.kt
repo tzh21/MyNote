@@ -34,34 +34,3 @@ class CategoryViewModel(
 
     var showNewCategoryDialog by mutableStateOf(false)
 }
-
-//class CategoryViewModel: ViewModel() {
-//    var username = mutableStateOf("null")
-//        private set
-//
-//    fun setUsername(name: String) {
-//        username.value = name
-//    }
-//
-//    var dirs = mutableStateListOf<String>()
-//        private set
-//
-//    fun setDirs(context: Context) {
-//        dirs.clear()
-//        dirs.addAll(LocalNoteFileApi.listDirs(username.value, context))
-//    }
-//
-//    var showDialog = mutableStateOf(false)
-//        private set
-//
-//    fun setShowDialog(value: Boolean) {
-//        showDialog.value = value
-//    }
-//
-//    var newCategory = mutableStateOf("")
-//        private set
-//
-//    fun setNewCategory(value: String) {
-//        newCategory.value = value
-//    }
-//}

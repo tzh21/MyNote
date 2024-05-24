@@ -1,6 +1,5 @@
 package com.example.mynote.ui.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
@@ -18,12 +17,6 @@ object AppViewModelProvider {
 
         initializer {
             LoginViewModel(
-                myNoteApplication().container.myNoteApiService
-            )
-        }
-
-        initializer {
-            SignupViewModel(
                 myNoteApplication().container.myNoteApiService
             )
         }

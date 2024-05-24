@@ -6,8 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mynote.data.CategoryEntity
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
+import com.example.mynote.data.getCurrentTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,6 +25,11 @@ class MyNoteViewModel(
     val categoryList = MutableStateFlow<List<String>>(emptyList())
     fun loadCategoryList(username: String) {
         viewModelScope.launch {
+            noteDao.insertCategory(CategoryEntity(
+                username = username,
+                category = "default",
+                lastUsedTime = getCurrentTime()
+            ))
             noteDao.getAllCategories(username)
                 .collect { newCategoryList ->
                     categoryList.value = newCategoryList

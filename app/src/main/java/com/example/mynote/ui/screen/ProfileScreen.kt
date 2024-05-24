@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -104,9 +105,9 @@ fun ProfileScreen(
                     }},
                 actions = {
                     IconButton(onClick = {
-//                        coroutineScope.launch {
-//                            viewModel.downloadProfile(context)
-//                        }
+                        coroutineScope.launch {
+                            viewModel.downloadProfile(context)
+                        }
                     }) {
                         Icon(
                             imageVector = Icons.Default.CloudDownload,
@@ -145,7 +146,7 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.weight(1f))
                 if (profileEntity.avatar.isNotEmpty()) {
                     val avatarFile = LocalNoteFileApi.loadAvatar(viewModel.username, profileEntity.avatar, context)
-                    if (avatarFile.exists()) {
+                    if (avatarFile.exists() && avatarFile.length() > 0) {
                         val avatarBitmap = BitmapFactory.decodeFile(avatarFile.absolutePath).asImageBitmap()
                         Card(
                             shape = RoundedCornerShape(8.dp)
@@ -162,6 +163,8 @@ fun ProfileScreen(
                     } else {
                         Text(text = "未设置", color = Color.Gray)
                     }
+                } else {
+                    Text(text = "未设置", color = Color.Gray)
                 }
             }
             Divider(thickness = 1.dp)
@@ -210,18 +213,18 @@ fun ProfileScreen(
         }
 
         if (viewModel.showMottoDialog.value) {
-            val tempMotto = rememberSaveable {
+            var tempMotto by rememberSaveable {
                 mutableStateOf(profileEntity.motto)
             }
             TextFieldDialog(
                 title = "修改个性签名",
                 text = {
                     TextField(
-                        value = tempMotto.value,
-                        onValueChange = { newValue -> tempMotto.value = newValue }
+                        value = tempMotto,
+                        onValueChange = { newValue -> tempMotto = newValue }
                     )},
                 onConfirmClick = {
-                    viewModel.updateMotto(tempMotto.value)
+                    viewModel.updateMotto(tempMotto)
                     viewModel.showMottoDialog.value = false
                 },
                 onDismissRequest = { viewModel.showMottoDialog.value = false }
@@ -229,18 +232,18 @@ fun ProfileScreen(
         }
 
         if (viewModel.showNicknameDialog.value) {
-            val tempNickname = rememberSaveable {
+            var tempNickname by rememberSaveable {
                 mutableStateOf(profileEntity.nickname)
             }
             TextFieldDialog(
                 title = "修改昵称",
                 text = {
                     TextField(
-                        value = tempNickname.value,
-                        onValueChange = { newValue -> tempNickname.value = newValue }
+                        value = tempNickname,
+                        onValueChange = { newValue -> tempNickname = newValue }
                     )},
                 onConfirmClick = {
-                    viewModel.updateNickname(tempNickname.value)
+                    viewModel.updateNickname(tempNickname)
                     viewModel.showNicknameDialog.value = false
                 },
                 onDismissRequest = { viewModel.showNicknameDialog.value = false }
@@ -259,34 +262,6 @@ fun ProfileScreen(
     }
 }
 
-//@Composable
-//fun TextFieldDialog(
-//    title: String,
-//    text: @Composable () -> Unit,
-//    onConfirmClick: () -> Unit,
-//    onDismissRequest: () -> Unit,
-//) {
-//    AlertDialog(
-//        shape = RectangleShape,
-//        title = { Text(text = title) },
-//        text = text,
-//        onDismissRequest = { },
-//        confirmButton = {
-//            ProfileButton(
-//                onClick = { onConfirmClick() },
-//                text = "确定")},
-//        dismissButton = {
-//            ProfileButton(
-//                onClick = { onDismissRequest() },
-//                text = "取消",
-//                colors = ButtonDefaults.buttonColors(
-//                    containerColor = MaterialTheme.colorScheme.surface,
-//                    contentColor = MaterialTheme.colorScheme.onSurface)
-//            )
-//        }
-//    )
-//}
-
 @Composable
 fun ItemRow(
     modifier: Modifier = Modifier,
@@ -301,22 +276,3 @@ fun ItemRow(
         content()
     }
 }
-
-//@Composable
-//fun MaxWidthButton(
-//    onClick: () -> Unit,
-//    modifier: Modifier = Modifier,
-//    text: String = "",
-//    colors: ButtonColors = ButtonDefaults.buttonColors(),
-//) {
-//    Button(
-//        onClick = { onClick() },
-//        shape = RoundedCornerShape(8.dp),
-//        colors = colors,
-//        modifier = modifier
-//            .height(dimensionResource(id = R.dimen.text_field_height))
-//            .fillMaxWidth()
-//    ) {
-//        Text(text = text, fontSize = Typography.titleMedium.fontSize)
-//    }
-//}

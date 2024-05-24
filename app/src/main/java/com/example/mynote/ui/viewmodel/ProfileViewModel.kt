@@ -2,7 +2,7 @@ package com.example.mynote.ui.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.runtime.MutableState
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -18,11 +18,7 @@ import com.example.mynote.network.MyNoteApiService
 import com.example.mynote.network.NicknameRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(
@@ -60,7 +56,7 @@ class ProfileViewModel(
     ) {
         viewModelScope.launch {
             noteDao.updateMotto(username, newMotto)
-//            apiService.postMotto(username, MottoRequest(newMotto))
+            apiService.postMotto(username, MottoRequest(newMotto))
         }
     }
 
@@ -71,68 +67,41 @@ class ProfileViewModel(
     ) {
         viewModelScope.launch {
             noteDao.updateNickname(username, newNickname)
-//            apiService.postNickname(username, NicknameRequest(newNickname))
+            apiService.postNickname(username, NicknameRequest(newNickname))
         }
     }
-
-//    ByteArray 格式的头像图片
-//    思路：无法将图片路径作为 State，因为图片路径始终不变。
-//    var avatarByteArray = mutableStateOf(ByteArray(0))
-//    fun initAvatar(context: Context) {
-//        val avatarFile = LocalNoteFileApi.loadAvatar("${username}/avatar", context)
-//        if (avatarFile.exists()) {
-//            avatarByteArray.value = avatarFile.readBytes()
-//        }
-//    }
 
     fun selectImage(imageUri: Uri, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             val fileName = getCurrentTime()
             LocalNoteFileApi.saveAvatar(imageUri, username, fileName, context)
             noteDao.updateAvatar(username, fileName)
+            RemoteFileApi.uploadAvatar(username, fileName, context, viewModelScope, apiService)
         }
     }
 
-//    suspend fun downloadProfile(
-//        context: Context
-//    ) {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            isSyncing = true
-//
-//            try {
-//                var newMotto = ""
-//                val mottoResponse = apiService.getMotto(username)
-//                if (mottoResponse.isSuccessful) {
-//                    val mottoBody = mottoResponse.body()
-//                    if (mottoBody != null) {
-//                        newMotto = mottoBody.motto
-//                    }
-//                }
-//
-//                var newNickname = ""
-//                val nicknameResponse = apiService.getNickname(username)
-//                if (nicknameResponse.isSuccessful) {
-//                    val nicknameBody = nicknameResponse.body()
-//                    if (nicknameBody != null) {
-//                        newNickname = nicknameBody.nickname
-//                    }
-//                }
-//
-//                val avatarResponse = apiService.getAvatar(username)
-//                if (avatarResponse.isSuccessful) {
-//                    val avatarBody = avatarResponse.body()
-//                    if (avatarBody != null) {
-//                        LocalNoteFileApi.writeAvatar("${username}/avatar", avatarBody.byteStream(), context)
-//                        avatarByteArray.value = LocalNoteFileApi.loadAvatar("${username}/avatar", context).readBytes()
-//                    }
-//                }
-//
-//                noteDao.insertProfile(ProfileEntity(username = username))
-//                noteDao.updateNickname(username, newNickname)
-//                noteDao.updateMotto(username, newMotto)
-//            } finally {
-//                isSyncing = false
-//            }
-//        }
-//    }
+    suspend fun downloadProfile(
+        context: Context
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = apiService.getProfile(username)
+                if (response.isSuccessful) {
+                    val responseBody = response.body()
+                    Log.d("focus", "downloadProfile: ${responseBody.toString()}")
+                    if (responseBody != null) {
+//                        获取头像图片并更新数据库
+                        RemoteFileApi.updateProfile(
+                            username, responseBody, context, viewModelScope, apiService, noteDao
+                        )
+
+//                        noteDao.insertProfile(ProfileEntity(username = username))
+//                        noteDao.updateProfile(username, responseBody.motto, responseBody.nickname, responseBody.avatar)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }

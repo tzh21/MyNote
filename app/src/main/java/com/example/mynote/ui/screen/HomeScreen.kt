@@ -2,6 +2,7 @@ package com.example.mynote.ui.screen
 
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -13,7 +14,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -23,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Person
@@ -54,6 +58,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -99,13 +104,8 @@ fun HomeScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(username) {
-        viewModel.username = username
-    }
-
-    LaunchedEffect(category) {
-        viewModel.category = category
-    }
+    viewModel.username = username
+    viewModel.category = category
 
     Scaffold(
         topBar = {
@@ -113,9 +113,8 @@ fun HomeScreen(
                 title = { Text(text = "笔记", modifier = Modifier.padding(start = 16.dp)) },
                 navigationIcon = {
 //                    前往用户信息界面
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    ) {
+                    Row {
+                        Spacer(modifier = Modifier.width(16.dp))
                         IconButton(
                             onClick = { navigateToProfile() }
                         ) {
@@ -128,29 +127,25 @@ fun HomeScreen(
                     }
                 },
                 actions = {
-                    Row(
-                       modifier = Modifier.padding(8.dp)
-                    ) {
 //                        云同步
-//                        Box {
-//                            val showSyncMenu = remember {
-//                                mutableStateOf(false)
-//                            }
-//
-//                            IconButton(onClick = {
-//                                showSyncMenu.value = true
-//                            }) {
-//                                Icon(
-//                                    imageVector = Icons.Default.Cloud,
-//                                    contentDescription = "Cloud sync",
-//                                    tint = MaterialTheme.colorScheme.primary
-//                                )
-//                            }
-//
-//                            DropdownMenu(
-//                                expanded = showSyncMenu.value,
-//                                onDismissRequest = { showSyncMenu.value = false }
-//                            ) {
+                        Box {
+                            val expandedSyncMenu = remember {mutableStateOf(false)}
+
+                            IconButton(onClick = {
+                                expandedSyncMenu.value = true
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Cloud,
+                                    contentDescription = "Cloud sync",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = expandedSyncMenu.value,
+                                onDismissRequest = { expandedSyncMenu.value = false }
+                            ) {
+//                                TODO
 //                                DropdownMenuItem(
 //                                    text = { Text(text = "上传全部笔记") },
 //                                    onClick = {
@@ -159,48 +154,49 @@ fun HomeScreen(
 //                                        }
 //                                    }
 //                                )
-//
-//                                DropdownMenuItem(
-//                                    text = { Text(text = "下载全部笔记") },
-//                                    onClick = {
-//                                        coroutineScope.launch {
-//                                            viewModel.download(context)
-//                                        }
-//                                    }
-//                                )
-//                            }
-//                        }
+
+                                DropdownMenuItem(
+                                    text = { Text(text = "下载全部笔记") },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            viewModel.downloadAll(context)
+                                        }
+                                    }
+                                )
+                            }
+                        }
 
 //                        前往分类界面
-                        IconButton(onClick = { navigateToCategory() }) {
-                            Icon(
-                                imageVector = Icons.Default.Folder,
-                                contentDescription = "Category",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                    IconButton(onClick = { navigateToCategory() }) {
+                        Icon(
+                            imageVector = Icons.Default.Folder,
+                            contentDescription = "Category",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
 
 //                        多选
-                        IconButton(onClick = { }) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircleOutline,
-                                contentDescription = "Multiselect",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-
-                        IconButton(onClick = {
-                            coroutineScope.launch {
-                                viewModel.deleteAllNotes(context)
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
+                    IconButton(onClick = { }) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircleOutline,
+                            contentDescription = "Multiselect",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
+
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            viewModel.deleteAllNotes(context)
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
                 }
             )
         },
@@ -419,28 +415,36 @@ fun HomeScreen(
     //                        笔记条目
                             Box {
                                 Card(
-                                    onClick = { navigateToEditor(noteList[index].fileName) },
+                                    onClick = {
+                                        navigateToEditor(noteList[index].fileName)
+                                              },
                                     shape = RoundedCornerShape(8.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = MaterialTheme.colorScheme.secondaryContainer
                                     ),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .pointerInput(Unit) {
-                                            detectTapGestures(
-                                                onTap = { navigateToEditor(noteList[index].fileName) },
-                                                onLongPress = { showNoteOption = true }
-                                            )
-                                        }
                                 ) {
                                     Column {
     //                                    封面图片
                                         if (noteList[index].coverImage != "") {
-                                            val imagePath = noteList[index].coverImage
-                                            val file = viewModel.loadFile(imagePath, context)
+                                            val imageFileName = noteList[index].coverImage
+                                            Log.d("focus", "coverImage path exists: $imageFileName")
+                                            val file = viewModel.loadImageFile(imageFileName, context)
                                             if (file.exists()) {
-                                                val bitmap = BitmapFactory.decodeFile(file.absolutePath).asImageBitmap()
-                                                Image(bitmap = bitmap, contentDescription = "Cover image")
+                                                Log.d("focus", "file exists: ${file.path}")
+                                                Log.d("focus", "file sizes:  ${file.length()}")
+                                                val bitmap = BitmapFactory.decodeFile(file.path)
+                                                if (bitmap != null) {
+                                                    Image(
+                                                        bitmap = bitmap.asImageBitmap(),
+                                                        contentDescription = "Cover image",
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .heightIn(max = 200.dp)
+                                                    )
+                                                }
                                             }
                                         }
     //                                    笔记信息
@@ -479,420 +483,6 @@ fun HomeScreen(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-//@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
-//@Composable
-//fun HomeScreen(
-//    navigateToCategory: () -> Unit,
-//    navigateToEditorScreen: (String) -> Unit,
-//    navigateToProfile: () -> Unit,
-//    navigateToHome: (String) -> Unit,
-//    username: String,
-//    category: String,
-//    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
-//) {
-//    Log.d("HomeScreen", "Recomposition")
-//
-//    val context = LocalContext.current
-//    val coroutineScope = rememberCoroutineScope()
-//
-////    设置用户名和分类
-//    viewModel.username.value = username
-//    viewModel.category.value = category
-//    viewModel.initialNoteList()
-//    viewModel.initialQueryNoteList()
-//
-////    从数据库中加载笔记列表
-//    val noteListState by viewModel.noteListStateFlow.collectAsState()
-//
-//    Scaffold(
-//        topBar = {
-//            MediumTopAppBar(
-//                title = { Text(text = "笔记", modifier = Modifier.padding(start = 16.dp)) },
-//                navigationIcon = {
-//                    Row(
-//                        modifier = Modifier.padding(start = 8.dp)
-//                    ) {
-//                        IconButton(
-//                            onClick = {
-//                                navigateToProfile()
-//                            }
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Default.Person,
-//                                contentDescription = "User information",
-//                                tint = MaterialTheme.colorScheme.primary
-//                            )
-//                        }
-//                    }
-//                },
-//                actions = {
-//                    Row(
-//                        modifier = Modifier.padding(end = 8.dp)
-//                    ) {
-//                        Box {
-//                            val showSyncMenu = remember {
-//                                mutableStateOf(false)
-//                            }
-//
-//                            IconButton(onClick = {
-//                                showSyncMenu.value = true
-//                            }) {
-//                                Icon(
-//                                    imageVector = Icons.Default.Cloud,
-//                                    contentDescription = "Cloud sync",
-//                                    tint = MaterialTheme.colorScheme.primary
-//                                )
-//                            }
-//
-//                            DropdownMenu(
-//                                expanded = showSyncMenu.value,
-//                                onDismissRequest = { showSyncMenu.value = false }
-//                            ) {
-//                                DropdownMenuItem(
-//                                    text = { Text(text = "上传全部笔记") },
-//                                    onClick = {
-//                                        coroutineScope.launch {
-//                                            viewModel.uploadAll(context)
-//                                        }
-//                                    }
-//                                )
-//
-//                                DropdownMenuItem(
-//                                    text = { Text(text = "下载全部笔记") },
-//                                    onClick = {
-//                                        coroutineScope.launch {
-//                                            viewModel.download(context)
-//                                        }
-//                                    }
-//                                )
-//                            }
-//                        }
-//
-//                        IconButton(onClick = { navigateToCategory() }) {
-//                            Icon(
-//                                imageVector = Icons.Default.Folder,
-//                                contentDescription = "Category",
-//                                tint = MaterialTheme.colorScheme.primary
-//                            )
-//                        }
-//
-//                        IconButton(onClick = { }) {
-//                            Icon(
-//                                imageVector = Icons.Default.CheckCircleOutline,
-//                                contentDescription = "Multiselect",
-//                                tint = MaterialTheme.colorScheme.primary
-//                            )
-//                        }
-//
-//                        IconButton(onClick = {
-//                            coroutineScope.launch {
-//                                viewModel.deleteAllFiles(context)
-//                            }
-//                        }) {
-//                            Icon(
-//                                imageVector = Icons.Default.Delete,
-//                                contentDescription = "Delete",
-//                                tint = MaterialTheme.colorScheme.error
-//                            )
-//                        }
-//                    }
-//                }
-//            )
-//        },
-//        floatingActionButton = {
-//            FloatingActionButton(onClick = {
-////                    这里采用创建时间作为文件名（这种设计要求两次创建间隔超过 1s）
-//                    coroutineScope.launch {
-//                        val currentTime = getCurrentTime()
-//                        viewModel.createNote(
-//                            currentTime,
-//                            context
-//                        )
-//                        navigateToEditorScreen(currentTime)
-//                    }
-//                },
-//                containerColor = MaterialTheme.colorScheme.primary,
-//                modifier = Modifier.padding(bottom = 32.dp, end = 16.dp)
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.Add,
-//                    contentDescription = "Add Note"
-//                )
-//            }
-//        }
-//    ) {
-//        val focusManager = LocalFocusManager.current
-//        Box(
-//            modifier = Modifier
-//                .pointerInput(Unit) {
-//                    detectTapGestures {
-//                        focusManager.clearFocus()
-//                    }
-//                }
-//                .padding(it)
-//        ) {
-//            Column(
-//                modifier = Modifier
-//                    .padding(horizontal = 16.dp)
-//                    .fillMaxSize()
-//            ) {
-////                搜索框
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    modifier = Modifier
-//                        .background(
-//                            color = Color(237, 237, 237),
-//                            shape = RoundedCornerShape(percent = 50)
-//                        )
-//                        .height(40.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Search,
-//                        contentDescription = "Search",
-//                        tint = Color.Gray,
-//                        modifier = Modifier.padding(start = 12.dp)
-//                    )
-//                    BasicTextField(
-//                        value = viewModel.queryText.value,
-//                        onValueChange = { newValue ->
-//                            viewModel.queryText.value = newValue
-//                            viewModel.setQueryNoteList(newValue)
-//                                        },
-//                        decorationBox = { innerTextField ->
-//                            if (viewModel.queryText.value.isEmpty()) {
-//                                Text(
-//                                    text = "搜索",
-//                                    style = TextStyle(
-//                                        color = Color.Gray,
-//                                        fontSize = 16.sp
-//                                    ),
-//                                )
-//                            }
-//                            innerTextField()
-//                        },
-//                        textStyle = TextStyle(
-//                            color = Color.Black,
-//                            fontSize = 16.sp
-//                        ),
-//                        singleLine = true,
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .padding(start = 12.dp)
-//                            .weight(5f)
-//                            .onFocusChanged { focusState ->
-//                                viewModel.isQueryFocused.value = focusState.isFocused
-//                            }
-//                    )
-//                    Box(
-//                        modifier = Modifier.weight(1f)
-//                    ) {
-//                        if (viewModel.queryText.value.isNotEmpty()) {
-//                            IconButton(
-//                                onClick = { viewModel.queryText.value = "" },
-//                                modifier = Modifier.padding(end = 12.dp)
-//                            ) {
-//                                Icon(
-//                                    imageVector = Icons.Default.Close,
-//                                    contentDescription = "Delete",
-//                                    tint = Color.Gray
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//
-////                搜索结果
-//                if (viewModel.isQueryFocused.value) {
-//                    val queryNoteList by viewModel.queryNoteListStateFlow.collectAsState()
-//                    LazyColumn {
-//                        items(queryNoteList.noteList.size) { index ->
-//                            Card {
-//                                Text(queryNoteList.noteList[index].title)
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                viewModel.initCategoryList(context)
-//                viewModel.initSelectedCategoryIndex(category)
-//
-//                LazyRow(
-//                    modifier = Modifier.padding(top = 16.dp)
-//                ) {
-//                    items(viewModel.categoryList.size) { index ->
-//                        FilterChip(
-//                            onClick = {
-//                                navigateToHome(viewModel.categoryList[index])
-//                                      },
-//                            label = {
-//                                Text(text = viewModel.categoryList[index])
-//                            },
-//                            selected = (index == viewModel.selectedCategoryIndex.intValue),
-//                            border = null,
-//                            modifier = Modifier
-//                                .padding(end = 8.dp)
-//                                .height(48.dp)
-//                        )
-//                    }
-//                }
-//
-//                val orientation = LocalConfiguration.current.orientation
-//                LazyVerticalStaggeredGrid(
-//                    columns = if (orientation == Configuration.ORIENTATION_PORTRAIT) StaggeredGridCells.Fixed(2)
-//                        else StaggeredGridCells.Adaptive(160.dp),
-//                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-//                    verticalItemSpacing = 8.dp,
-//                    modifier = Modifier.padding(top = 16.dp)
-//                ) {
-//                    items(noteListState.noteList.size) { index ->
-//                        val showOption = remember { mutableStateOf(false) }
-//
-//                        Box {
-//                            Card(
-//                                shape = RoundedCornerShape(8.dp),
-//                                colors = CardDefaults.cardColors(
-//                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-//                                ),
-//                                modifier = Modifier
-////                                    .clickable {
-////                                        navigateToEditorScreen(noteListState.noteList[index].fileName)
-////                                    }
-//                                    .pointerInput(Unit) {
-//                                        detectTapGestures(
-//                                            onTap = {
-//                                                navigateToEditorScreen(noteListState.noteList[index].fileName)
-//                                            },
-////                                            onPress = {
-////                                                navigateToEditorScreen(noteListState.noteList[index].fileName)
-////                                            },
-//                                            onLongPress = {
-//                                                showOption.value = true
-//                                            }
-//                                        )
-//                                    }
-//                            ) {
-//                                Column {
-////                                图片
-//                                    if (noteListState.noteList[index].coverImage != "") {
-//                                        val imagePath = noteListState.noteList[index].coverImage
-//                                        val file = LocalNoteFileApi.loadFile(imagePath, context)
-//                                        if (file.exists()) {
-//                                            val image = file.toUri().toString()
-//                                            GlideImage(
-//                                                model = image,
-//                                                contentDescription = "image",
-//                                                contentScale = ContentScale.Crop,
-//                                                modifier = Modifier
-//                                                    .height(140.dp)
-//                                            )
-//                                        }
-//                                    }
-////                                文本
-//                                    Column(
-//                                        modifier = Modifier
-//                                            .padding(12.dp)
-//                                    ) {
-//                                        val noteTitle = noteListState.noteList[index].title
-//                                        Text(
-//                                            text = if (noteTitle == "") "未命名" else noteTitle,
-//                                            fontSize = Typography.titleLarge.fontSize,
-//                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-//                                        )
-//                                        Text(
-//                                            text = noteListState.noteList[index].lastModifiedTime,
-//                                            fontSize = Typography.bodyMedium.fontSize,
-//                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-//                                        )
-//                                    }
-//                                }
-//                            }
-//
-//                            DropdownMenu(
-//                                expanded = showOption.value,
-//                                onDismissRequest = { showOption.value = false }
-//                            ) {
-//                                DropdownMenuItem(
-//                                    text = { Text("删除") },
-//                                    onClick = {
-//                                        coroutineScope.launch {
-//                                            viewModel.deleteNote(
-//                                                username,
-//                                                category,
-//                                                noteListState.noteList[index].fileName,
-//                                                context
-//                                            )
-//                                        }
-//                                    }
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    if (viewModel.showSyncDialog.value) {
-//        Dialog(onDismissRequest = {  }) {
-//            Card {
-//                Text("正在下载数据...")
-//            }
-//        }
-//    }
-//}
-
-@Preview
-@Composable
-fun SearchField() {
-    var text by remember { mutableStateOf("") }
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .background(
-                color = Color(237, 237, 237),
-                shape = RoundedCornerShape(percent = 50)
-            )
-            .height(40.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = "Search",
-            modifier = Modifier.padding(start = 12.dp)
-        )
-        BasicTextField(
-            value = text,
-            onValueChange = {text = it},
-            modifier = Modifier
-                .fillMaxWidth(),
-            decorationBox = { innerTextField ->
-                if (text.isEmpty()) {
-                    Text(
-                        text = "搜索",
-                        style = TextStyle(
-                            color = Color.Gray,
-                            fontSize = 16.sp
-                        ),
-                        modifier = Modifier.padding(start = 12.dp)
-                    )
-                }
-            }
-        )
-        if (text.isNotEmpty()) {
-            IconButton(
-                onClick = { text = "" },
-                modifier = Modifier.padding(end = 12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = Color.Gray
-                )
             }
         }
     }
