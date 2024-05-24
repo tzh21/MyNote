@@ -1,14 +1,15 @@
 package com.example.mynote.ui.viewmodel
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mynote.network.ErrorResponse
 import com.example.mynote.network.LoginRequest
 import com.example.mynote.network.MyNoteApiService
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.mynote.network.SignupRequest
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -21,7 +22,7 @@ enum class LoginStatus {
 }
 
 data class LoginState(
-    val email: String = "",
+    val username: String = "",
     val password: String = "",
     val status: LoginStatus = LoginStatus.INACTIVE,
     val errorDetail: String = ""
@@ -30,32 +31,18 @@ data class LoginState(
 class LoginViewModel(
     val apiService: MyNoteApiService
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(LoginState())
-    val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
+    var username by mutableStateOf("")
+    var password by mutableStateOf("")
+    var loginStatus by mutableStateOf(LoginStatus.INACTIVE)
+    var error by mutableStateOf("")
 
-    fun onEmailChange(email: String) {
-        _uiState.update {
-            it.copy(email = email)
-        }
-    }
-
-    fun onPasswordChange(password: String) {
-        _uiState.update {
-            it.copy(password = password)
-        }
-    }
-
-    fun onLoginTriggered() {
+    suspend fun login() {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(status = LoginStatus.LOADING)
-            }
+            loginStatus = LoginStatus.LOADING
             try {
-                val response = apiService.login(LoginRequest(_uiState.value.email, _uiState.value.password))
+                val response = apiService.login(LoginRequest(username, password))
                 if (response.isSuccessful) {
-                    _uiState.update {
-                        it.copy(status = LoginStatus.SUCCESS)
-                    }
+                    loginStatus = LoginStatus.SUCCESS
                 }
                 else {
                     val errorBody = response.errorBody()?.string()
@@ -65,28 +52,48 @@ class LoginViewModel(
                         "unknown error"
                     }
 
-                    _uiState.update {
-                        it.copy(
-                            status = LoginStatus.ERROR,
-                            errorDetail = errorDetail
-                        )
-                    }
+                    loginStatus = LoginStatus.ERROR
+                    error = errorDetail
                 }
             } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        status = LoginStatus.ERROR,
-                        errorDetail = e.message ?: "unknown error"
-                    )
-                }
+                loginStatus = LoginStatus.ERROR
+                error = e.message ?: "unknown error"
             }
         }
     }
-    fun defaultLogin() {
-        _uiState.update {
-            it.copy(email = "3", password = "4")
+
+    suspend fun signup() {
+        viewModelScope.launch {
+            loginStatus = LoginStatus.LOADING
+            try {
+                val response = apiService.signup(SignupRequest(username, password))
+                if (response.isSuccessful) {
+                    loginStatus = LoginStatus.SUCCESS
+                }
+                else {
+                    val errorBody = response.errorBody()?.string()
+                    val errorDetail = if (errorBody != null) {
+                        Json.decodeFromString<ErrorResponse>(errorBody).error
+                    } else {
+                        "unknown error"
+                    }
+
+                    loginStatus = LoginStatus.ERROR
+                    error = errorDetail
+                }
+            } catch (e: Exception) {
+                loginStatus = LoginStatus.ERROR
+            }
         }
-        onLoginTriggered()
+    }
+
+    fun defaultLogin() {
+        viewModelScope.launch {
+            delay(200)
+            username = "3"
+            delay(200)
+            password = "4"
+            login()
+        }
     }
 }
-

@@ -5,18 +5,18 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.mynote.MyNoteApplication
+import com.example.mynote.MyNoteViewModel
 
 object AppViewModelProvider {
     val Factory = viewModelFactory {
-        // Initializer for HomeViewModel
         initializer {
-            LoginViewModel(
-                myNoteApplication().container.myNoteApiService
+            MyNoteViewModel(
+                myNoteApplication().container.noteDao
             )
         }
 
         initializer {
-            SignupViewModel(
+            LoginViewModel(
                 myNoteApplication().container.myNoteApiService
             )
         }
@@ -36,7 +36,9 @@ object AppViewModelProvider {
         }
 
         initializer {
-            CategoryViewModel()
+            CategoryViewModel(
+                myNoteApplication().container.noteDao
+            )
         }
 
         initializer {

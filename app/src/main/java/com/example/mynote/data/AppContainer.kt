@@ -1,6 +1,3 @@
-//AppContainer 作用参考
-//https://developer.android.com/courses/pathways/android-basics-compose-unit-5-pathway-2
-
 package com.example.mynote.data
 
 import android.content.Context
@@ -8,7 +5,10 @@ import com.example.mynote.network.MyNoteApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody
+import retrofit2.Converter
 import retrofit2.Retrofit
+import java.lang.reflect.Type
 
 interface AppContainer {
     val myNoteApiService: MyNoteApiService
