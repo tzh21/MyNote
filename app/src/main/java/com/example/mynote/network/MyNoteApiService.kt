@@ -68,7 +68,7 @@ interface MyNoteApiService {
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
 
     @POST("signup")
-    suspend fun signup(@Body signupRequest: SignupRequest): LoginResponse
+    suspend fun signup(@Body signupRequest: SignupRequest): Response<LoginResponse>
 
     @GET("list/{username}")
     suspend fun list(@Path("username") username: String): Response<FileList>

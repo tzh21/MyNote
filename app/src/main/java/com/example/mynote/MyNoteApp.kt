@@ -22,8 +22,6 @@ import com.example.mynote.ui.screen.LoginRoute
 import com.example.mynote.ui.screen.LoginScreen
 import com.example.mynote.ui.screen.ProfileRoute
 import com.example.mynote.ui.screen.ProfileScreen
-import com.example.mynote.ui.screen.SignupRoute
-import com.example.mynote.ui.screen.SignupScreen
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 
 @Composable
@@ -52,15 +50,15 @@ fun MyNoteApp(
                 navigateToHome = { loginUsername ->
                     viewModel.username = loginUsername
                     navController.navigate("${HomeRoute.base}/$loginUsername/${HomeRoute.defaultCategory}") },
-                navigateToSignup = { navController.navigate(SignupRoute) },
+//                navigateToSignup = { navController.navigate(SignupRoute) },
             )
         }
 
-        composable(route = SignupRoute) {
-            SignupScreen(
-                navigateToHome = { navController.navigate("${HomeRoute.base}/$it/${HomeRoute.defaultCategory}") }
-            )
-        }
+//        composable(route = SignupRoute) {
+//            SignupScreen(
+//                navigateToHome = { navController.navigate("${HomeRoute.base}/$it/${HomeRoute.defaultCategory}") }
+//            )
+//        }
 
         composable(
             route = HomeRoute.complete,
