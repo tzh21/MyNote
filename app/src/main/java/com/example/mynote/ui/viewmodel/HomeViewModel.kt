@@ -88,7 +88,7 @@ class HomeViewModel(
     var isQueryFocused by mutableStateOf(false)
 //    更新搜索笔记的列表
     fun updateQueryResults() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.filterNotes(username, queryText).collect { queryResultsStateFlow.value = it }
         }
     }
@@ -99,22 +99,18 @@ class HomeViewModel(
         return LocalNoteFileApi.loadImage(username, fileName, context)
     }
 
-    fun downloadAll(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val listResponse = apiService.list(username)
-            if (listResponse.isSuccessful) {
-                val fileNameList = listResponse.body()!!.files
-                for (fileName in fileNameList) {
+    suspend fun downloadAll(context: Context) {
+        val listResponse = apiService.list(username)
+        if (listResponse.isSuccessful) {
+            val fileNameList = listResponse.body()!!.files
+            for (fileName in fileNameList) {
+                viewModelScope.launch(Dispatchers.IO) {
                     RemoteFileApi.downloadNote(
                         username, fileName, category, context,
-                        viewModelScope, apiService, noteDao
+                        apiService, noteDao
                     )
                 }
             }
         }
     }
 }
-
-data class NoteListUiState(
-    val noteList: List<NoteEntity> = listOf(),
-)

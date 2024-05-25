@@ -2,7 +2,6 @@ package com.example.mynote.ui.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,7 +16,6 @@ import com.example.mynote.data.CategoryEntity
 import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
-import com.example.mynote.data.NoteLoaderApi
 import com.example.mynote.data.RemoteFileApi
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.network.MyNoteApiService
@@ -40,7 +38,7 @@ class EditorViewModel(
     var noteTitle by mutableStateOf("")
     var noteBody = mutableStateListOf<Block>()
     fun loadNote(context: Context) {
-        val note = NoteLoaderApi.loadNote(username, fileName, context)
+        val note = LocalNoteFileApi.loadNote(username, fileName, context)
         noteTitle = note.title
         noteBody.clear()
         noteBody.addAll(note.body)
@@ -48,7 +46,7 @@ class EditorViewModel(
 
     var lastModifiedTime = MutableStateFlow<String>("")
     fun loadLastModifiedTime() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             lastModifiedTime.value = noteDao.getLastModifiedTime(username, fileName)
                 .filterNotNull()
                 .first()
@@ -70,18 +68,14 @@ class EditorViewModel(
             val note = Note(title = noteTitle, body = noteBody)
             LocalNoteFileApi.saveNote(username, fileName, note, context)
     //        数据库中保存文件
-            val bodyString = getBodyString()
-            val oldEntity = noteDao.getNoteByName(username, fileName)
-                .filterNotNull()
-                .first()
-            LocalNoteFileApi.updateNoteEntity(username, fileName, category, note, noteDao)
+            LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
             noteDao.updateCategoryLastUsedTime(username, category, getCurrentTime())
         }
     }
 
     var categoryList = MutableStateFlow<List<String>>(emptyList())
     fun loadCategoryList(username: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.getAllCategories(username)
                 .collect { newCategoryList ->
                     categoryList.value = newCategoryList
@@ -91,7 +85,7 @@ class EditorViewModel(
 
     var showNewCategoryDialog by mutableStateOf(false)
     fun createCategory(newCategory: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.insertCategory(CategoryEntity(0, username, newCategory, getCurrentTime()))
         }
     }
@@ -195,7 +189,7 @@ class EditorViewModel(
     suspend fun uploadNote(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             saveNote(context)
-            RemoteFileApi.uploadNote(username, fileName, context, viewModelScope, apiService)
+            RemoteFileApi.uploadNote(username, fileName, context, apiService)
         }
     }
 }

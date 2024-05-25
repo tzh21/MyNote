@@ -9,6 +9,7 @@ import com.example.mynote.network.ErrorResponse
 import com.example.mynote.network.LoginRequest
 import com.example.mynote.network.MyNoteApiService
 import com.example.mynote.network.SignupRequest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -37,7 +38,7 @@ class LoginViewModel(
     var error by mutableStateOf("")
 
     suspend fun login() {
-        viewModelScope.launch {
+//        viewModelScope.launch(Dispatchers.IO) {
             loginStatus = LoginStatus.LOADING
             try {
                 val response = apiService.login(LoginRequest(username, password))
@@ -59,11 +60,11 @@ class LoginViewModel(
                 loginStatus = LoginStatus.ERROR
                 error = e.message ?: "unknown error"
             }
-        }
+//        }
     }
 
     suspend fun signup() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             loginStatus = LoginStatus.LOADING
             try {
                 val response = apiService.signup(SignupRequest(username, password))

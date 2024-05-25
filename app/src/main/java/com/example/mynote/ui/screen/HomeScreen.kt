@@ -75,6 +75,7 @@ import com.example.mynote.data.NoteEntity
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 data object HomeRoute {
@@ -158,7 +159,7 @@ fun HomeScreen(
                                 DropdownMenuItem(
                                     text = { Text(text = "下载全部笔记") },
                                     onClick = {
-                                        coroutineScope.launch {
+                                        coroutineScope.launch(Dispatchers.IO) {
                                             viewModel.downloadAll(context)
                                         }
                                     }

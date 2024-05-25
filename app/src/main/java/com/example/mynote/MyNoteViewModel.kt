@@ -10,6 +10,7 @@ import com.example.mynote.data.CategoryEntity
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
 import com.example.mynote.data.getCurrentTime
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -24,7 +25,7 @@ class MyNoteViewModel(
 
     val categoryList = MutableStateFlow<List<String>>(emptyList())
     fun loadCategoryList(username: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.insertCategory(CategoryEntity(
                 username = username,
                 category = "default",
@@ -43,7 +44,7 @@ class MyNoteViewModel(
     val categoryNotesMap = MutableStateFlow<Map<String, List<NoteEntity>>>(emptyMap())
     @OptIn(ExperimentalCoroutinesApi::class)
     fun loadCategoryNotesMap(username: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.getAllCategories(username)
                 .flatMapLatest { categories ->
                     val flows = categories.map { category ->

@@ -36,7 +36,7 @@ class ProfileViewModel(
     var username = ""
 
     fun initProfileStateFlow() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.getProfile(username)
                 .filterNotNull()
                 .collect { newProfile -> profileStateFlow.value = newProfile }
@@ -44,7 +44,7 @@ class ProfileViewModel(
     }
 
     fun insertProfile() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.insertProfile(ProfileEntity(username = username))
         }
     }
@@ -54,7 +54,7 @@ class ProfileViewModel(
     fun updateMotto(
         newMotto: String
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.updateMotto(username, newMotto)
             apiService.postMotto(username, MottoRequest(newMotto))
         }
@@ -65,7 +65,7 @@ class ProfileViewModel(
     fun updateNickname(
         newNickname: String
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.updateNickname(username, newNickname)
             apiService.postNickname(username, NicknameRequest(newNickname))
         }
@@ -76,7 +76,7 @@ class ProfileViewModel(
             val fileName = getCurrentTime()
             LocalNoteFileApi.saveAvatar(imageUri, username, fileName, context)
             noteDao.updateAvatar(username, fileName)
-            RemoteFileApi.uploadAvatar(username, fileName, context, viewModelScope, apiService)
+            RemoteFileApi.uploadAvatar(username, fileName, context, apiService)
         }
     }
 
@@ -92,7 +92,7 @@ class ProfileViewModel(
                     if (responseBody != null) {
 //                        获取头像图片并更新数据库
                         RemoteFileApi.updateProfile(
-                            username, responseBody, context, viewModelScope, apiService, noteDao
+                            username, responseBody, context, apiService, noteDao
                         )
 
 //                        noteDao.insertProfile(ProfileEntity(username = username))

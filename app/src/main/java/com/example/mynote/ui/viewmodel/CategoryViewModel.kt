@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mynote.data.CategoryEntity
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.getCurrentTime
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -18,7 +19,7 @@ class CategoryViewModel(
 
     var categoryList = MutableStateFlow<List<String>>(emptyList())
     fun loadCategoryList(username: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.getAllCategories(username)
                 .collect { newCategoryList ->
                     categoryList.value = newCategoryList
@@ -27,7 +28,7 @@ class CategoryViewModel(
     }
 
     fun createCategory(newCategory: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             noteDao.insertCategory(CategoryEntity(0, username, newCategory, getCurrentTime()))
         }
     }

@@ -1,5 +1,6 @@
 package com.example.mynote.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import com.example.mynote.ui.component.MaxWidthButton
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.LoginStatus
 import com.example.mynote.ui.viewmodel.LoginViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 const val LoginRoute = "login"
@@ -141,7 +143,7 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     MaxWidthButton(
-                        onClick = { coroutineScope.launch { viewModel.login() } },
+                        onClick = { coroutineScope.launch(Dispatchers.IO) { viewModel.login() } },
                         modifier = Modifier.weight(1f),
                         text = "登录"
                     )
