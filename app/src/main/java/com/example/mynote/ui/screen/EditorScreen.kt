@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +29,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
@@ -38,6 +41,7 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -122,101 +126,106 @@ fun EditorScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(
-            title = {},
-            navigationIcon = {
-                Row {
-                    Spacer(modifier = Modifier.width(16.dp))
-                    IconButton(onClick = { coroutineScope.launch {
-                        viewModel.saveNote(context)
-                        navigateToHome()
-                    }}) {
-                        Icon(
-                            imageVector = Icons.Filled.Home,
-                            contentDescription = "Back to home",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            },
-            actions = {
-                Box {
-                    var categoriesExpanded by remember { mutableStateOf(false) }
-                    Row(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        AssistChip(
-                            onClick = { categoriesExpanded = true },
-                            label = { Text(text = viewModel.category) },
-                            border = null,
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            ),
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = categoriesExpanded,
-                        onDismissRequest = { categoriesExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(text = "新建分类") },
-                            onClick = { viewModel.showNewCategoryDialog = true }
-                        )
-                        val categoryList by viewModel.categoryList.collectAsState()
-                        categoryList.forEach { categoryItem ->
-                            DropdownMenuItem(
-                                text = { Text(categoryItem) },
-                                onClick = {
-                                    coroutineScope.launch {
-                                        categoriesExpanded = false
-                                        viewModel.moveNote(categoryItem, context)
-                                        navigateToEditor(categoryItem, viewModel.fileName)
-                                    }
+        topBar = {
+            Column {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        Row {
+                            Spacer(modifier = Modifier.width(16.dp))
+                            IconButton(onClick = { coroutineScope.launch {
+                                viewModel.saveNote(context)
+                                navigateToHome()
+                            }}) {
+                                Icon(
+                                    imageVector = Icons.Filled.Home,
+                                    contentDescription = "Back to home",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        Box {
+                            var categoriesExpanded by remember { mutableStateOf(false) }
+                            Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                AssistChip(
+                                    onClick = { categoriesExpanded = true },
+                                    label = { Text(text = viewModel.category) },
+                                    border = null,
+                                    colors = AssistChipDefaults.assistChipColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                    ),
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = categoriesExpanded,
+                                onDismissRequest = { categoriesExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(text = "新建分类") },
+                                    onClick = { viewModel.showNewCategoryDialog = true }
+                                )
+                                val categoryList by viewModel.categoryList.collectAsState()
+                                categoryList.forEach { categoryItem ->
+                                    DropdownMenuItem(
+                                        text = { Text(categoryItem) },
+                                        onClick = {
+                                            coroutineScope.launch {
+                                                categoriesExpanded = false
+                                                viewModel.moveNote(categoryItem, context)
+                                                navigateToEditor(categoryItem, viewModel.fileName)
+                                            }
+                                        }
+                                    )
                                 }
+                            }
+                        }
+                        IconButton(onClick = { coroutineScope.launch {
+                            viewModel.uploadNote(context)
+                        }}) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Upload",
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
+                        Spacer(modifier = Modifier.width(16.dp))
                     }
-                }
-                IconButton(onClick = { coroutineScope.launch {
-                    viewModel.uploadNote(context)
-                }}) {
-                    Icon(
-                        imageVector = Icons.Default.CloudUpload,
-                        contentDescription = "Upload",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Spacer(modifier = Modifier.width(16.dp))
+                )
+                Divider()
+//                Spacer(modifier = Modifier.height(16.dp))
+//                Row(
+//                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+//                ) {
+//                    ImagePicker { viewModel.insertImage(it, context) }
+//                    AudioPicker { viewModel.insertAudio(it, context) }
+//                    CameraButton { viewModel.insertImage(it, context) }
+//                    AudioRecorderButton { viewModel.insertAudio(it, context) }
+//                }
+//                Spacer(modifier = Modifier.height(16.dp))
+//                Divider()
             }
-        )
                  },
-        bottomBar = {
-            Column {
-                Divider(thickness = 1.dp)
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(vertical = 16.dp)
-                ) {
-                    ImagePicker { viewModel.insertImage(it, context) }
-                    AudioPicker { viewModel.insertAudio(it, context) }
-                    CameraButton { viewModel.insertImage(it, context) }
-                    AudioRecorderButton { viewModel.insertAudio(it, context) }
-                }
-            }
-        }
     ) { scaffoldPadding ->
         val focusManager = LocalFocusManager.current
         Box(
             modifier = Modifier
                 .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
                 .padding(scaffoldPadding)
+                .imePadding()
         ) {
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
                 LazyColumn(
-                    modifier = Modifier.padding(horizontal = 20.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .weight(1f)
                 ) {
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
 //                    笔记标题
                     item {
                         val titleTextSize = Typography.headlineMedium.fontSize
@@ -238,16 +247,18 @@ fun EditorScreen(
                             },
                         )
                     }
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
 //                    修改时间
                     item {
                         val lastModifiedTime by viewModel.lastModifiedTime.collectAsState()
                         Text(
                             "最近修改时间：${lastModifiedTime.ifEmpty { "未知" }}",
                             style = TextStyle(color = Color.LightGray),
-                            modifier = Modifier.padding(top = 12.dp)
                         )
                     }
-                    item { Spacer(modifier = Modifier.height(20.dp)) }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
 //                    笔记正文
                     items(viewModel.noteBody.size) { index ->
                         val blockData = viewModel.noteBody[index].data
@@ -274,7 +285,9 @@ fun EditorScreen(
                                                 viewModel.noteBody.add(Block(BlockType.BODY, ""))
                                             }
                                         }
-                                    }
+                                    },
+//                                    onImageSelected = { viewModel.insertImage(it, context) },
+//                                    onAudioSelected = { viewModel.insertAudio(it, context) }
                                 )
                             }
                             BlockType.IMAGE -> {
@@ -302,6 +315,13 @@ fun EditorScreen(
                             }
                         }
                     }
+                }
+                Row {
+                    Spacer(modifier = Modifier.width(16.dp))
+                    ImagePicker { viewModel.insertImage(it, context) }
+                    AudioPicker { viewModel.insertAudio(it, context) }
+                    CameraButton { viewModel.insertImage(it, context) }
+                    AudioRecorderButton { viewModel.insertAudio(it, context) }
                 }
             }
         }
@@ -332,28 +352,58 @@ fun BodyBlock(
     onNext: () -> Unit,
     onKeyEvent: (KeyEvent) -> Boolean,
     onFocusChanged: (FocusState) -> Unit,
+//    onImageSelected: (Uri) -> Unit,
+//    onAudioSelected: (Uri) -> Unit
 ) {
+//    var expanded by remember {
+//        mutableStateOf(false)
+//    }
     val normalTextSize = Typography.bodyMedium.fontSize
     val normalTextLineHeight = normalTextSize * 1.5f
-    BasicTextField(
-        value = value,
-        onValueChange = { onValueChanged(it) },
-        textStyle = TextStyle(
-            fontSize = normalTextSize,
-            lineHeight = normalTextLineHeight,
-        ),
-        keyboardOptions = KeyboardOptions.Default.copy(
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { onNext() }
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .onKeyEvent { onKeyEvent(it) }
-            .padding(bottom = 16.dp)
-            .onFocusChanged { onFocusChanged(it) }
-    )
+//    Box {
+    Column {
+        BasicTextField(
+            value = value,
+            onValueChange = { onValueChanged(it) },
+            textStyle = TextStyle(
+                fontSize = normalTextSize,
+                lineHeight = normalTextLineHeight,
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { onNext() }
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onKeyEvent { onKeyEvent(it) }
+                .padding(vertical = 8.dp)
+                .onFocusChanged {
+                    onFocusChanged(it)
+//                    expanded = it.isFocused
+                }
+//                .pointerInput(Unit) {
+//                    detectTapGestures(onLongPress = { expanded = true })
+//                }
+        )
+//        if (expanded) {
+//                Row {
+//                    CameraButton {
+//                        onImageSelected(it)
+//                    }
+//                    ImagePicker {
+//                        onImageSelected(it)
+//                    }
+//                    AudioRecorderButton {
+//                        onAudioSelected(it)
+//                    }
+//                    AudioPicker {
+//                        onAudioSelected(it)
+//                    }
+//                }
+//        }
+    }
 }
 
 @Composable
@@ -362,7 +412,11 @@ fun ImageBlock(
     context: Context, removeBlock: () -> Unit
 ) {
     val imageFile = LocalNoteFileApi.loadImage(username, fileName, context)
-    val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath).asImageBitmap()
+    val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath)?.asImageBitmap()
+    if (bitmap == null) {
+        Log.e("ImageBlock", "Failed to decode image file $fileName.")
+        return
+    }
     var expanded by remember { mutableStateOf(false) }
 
     Box(

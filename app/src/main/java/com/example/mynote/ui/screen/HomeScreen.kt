@@ -430,11 +430,8 @@ fun HomeScreen(
     //                                    封面图片
                                         if (noteList[index].coverImage != "") {
                                             val imageFileName = noteList[index].coverImage
-                                            Log.d("focus", "coverImage path exists: $imageFileName")
                                             val file = viewModel.loadImageFile(imageFileName, context)
                                             if (file.exists()) {
-                                                Log.d("focus", "file exists: ${file.path}")
-                                                Log.d("focus", "file sizes:  ${file.length()}")
                                                 val bitmap = BitmapFactory.decodeFile(file.path)
                                                 if (bitmap != null) {
                                                     Image(
