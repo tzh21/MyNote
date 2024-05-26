@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -32,7 +32,9 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PauseCircleOutline
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -74,6 +76,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.Block
@@ -84,6 +87,7 @@ import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 
 data object EditorRoute {
     const val base = "note"
@@ -195,6 +199,8 @@ fun EditorScreen(
                 ) {
                     ImagePicker { viewModel.insertImage(it, context) }
                     AudioPicker { viewModel.insertAudio(it, context) }
+                    CameraButton { viewModel.insertImage(it, context) }
+                    AudioRecorderButton { viewModel.insertAudio(it, context) }
                 }
             }
         }
@@ -371,7 +377,7 @@ fun ImageBlock(
             Image(
                 bitmap = bitmap,
                 contentDescription = "It is an image.",
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.FillWidth,
                 modifier = Modifier
                     .fillMaxWidth()
                     .pointerInput(Unit) { detectTapGestures(onLongPress = { expanded = true }) }
@@ -407,6 +413,47 @@ fun ImagePicker(onImageSelected: (Uri) -> Unit) {
         Icon(
             imageVector = Icons.Default.Image,
             contentDescription = "Image",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+var tempImageFile = File("")
+@Composable
+fun CameraButton(onImageCaptured: (Uri) -> Unit) {
+    val context = LocalContext.current
+    val takePictureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
+        if (isSuccess) {
+            // Assuming you are saving the image to a temporary file
+            val imageUri = FileProvider.getUriForFile(
+                context,
+                context.packageName + ".provider",
+                tempImageFile
+            )
+            onImageCaptured(imageUri)
+        }
+    }
+
+    IconButton(
+        onClick = {
+            val outputDirectory = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val photoFile = File.createTempFile(
+                "temp_", /* prefix */
+                ".jpg", /* suffix */
+                outputDirectory /* directory */
+            )
+            tempImageFile = photoFile // Assigning the temporary file to a global variable
+            val photoURI = FileProvider.getUriForFile(
+                context,
+                context.packageName + ".provider",
+                photoFile
+            )
+            takePictureLauncher.launch(photoURI)
+        }
+    ) {
+        Icon(
+            imageVector = Icons.Default.PhotoCamera,
+            contentDescription = "Camera",
             tint = MaterialTheme.colorScheme.primary
         )
     }
@@ -466,6 +513,33 @@ fun AudioBlock(
         ) {
             DropdownMenuItem(text = { Text("删除") }, onClick = { removeBlock() })
         }
+    }
+}
+
+@Composable
+fun AudioRecorderButton(
+    onAudioRecorded: (Uri) -> Unit,
+) {
+    val recordAudioLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val audioUri = result.data?.data
+            if (audioUri != null) {
+                onAudioRecorded(audioUri)
+            }
+        }
+    }
+
+    IconButton(
+        onClick = {
+            val intent = Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION)
+            recordAudioLauncher.launch(intent)
+        }
+    ) {
+        Icon(
+            imageVector = Icons.Default.Mic,
+            contentDescription = "Record Audio",
+            tint = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
