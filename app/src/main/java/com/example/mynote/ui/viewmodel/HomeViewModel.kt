@@ -113,4 +113,20 @@ class HomeViewModel(
             }
         }
     }
+
+    suspend fun uploadAll(context: Context) {
+//        从数据库中获取所有笔记的列表
+//        逐个上传
+        viewModelScope.launch(Dispatchers.IO) {
+            val noteList = noteDao.getAllNotes(username)
+            for (note in noteList) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    RemoteFileApi.uploadNote(
+                        username, note.fileName, context,
+                        apiService
+                    )
+                }
+            }
+        }
+    }
 }

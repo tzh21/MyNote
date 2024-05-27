@@ -2,7 +2,6 @@ package com.example.mynote.ui.screen
 
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -45,7 +44,6 @@ import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,7 +64,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -146,15 +143,14 @@ fun HomeScreen(
                                 expanded = expandedSyncMenu.value,
                                 onDismissRequest = { expandedSyncMenu.value = false }
                             ) {
-//                                TODO
-//                                DropdownMenuItem(
-//                                    text = { Text(text = "上传全部笔记") },
-//                                    onClick = {
-//                                        coroutineScope.launch {
-//                                            viewModel.uploadAll(context)
-//                                        }
-//                                    }
-//                                )
+                                DropdownMenuItem(
+                                    text = { Text(text = "上传全部笔记") },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            viewModel.uploadAll(context)
+                                        }
+                                    }
+                                )
 
                                 DropdownMenuItem(
                                     text = { Text(text = "下载全部笔记") },

@@ -331,76 +331,80 @@ object RemoteFileApi {
         username: String, fileName: String, category: String, context: Context,
         apiService: MyNoteApiService, noteDao: NoteDao
     ) {
-        val fileResponse = apiService.getBlocks(username, fileName)
-        if (fileResponse.isSuccessful) {
-            val blocksBody = fileResponse.body()!!
-            val noteFile = LocalNoteFileApi.createNote(username, fileName, context)
-            withContext(Dispatchers.IO) {
-                FileOutputStream(noteFile).use { stream ->
-                    stream.write(blocksBody.bytes())
-                }
-            }
-
-            //            资源文件
-            val note = LocalNoteFileApi.loadNote(username, fileName, context)
-            val noteTitle = note.title
-            val noteBody = note.body
-            for (block in noteBody) {
-                val resourceFileName = block.data
-                when (block.type) {
-                    BlockType.IMAGE -> {
-                        val resourceFile =
-                            LocalNoteFileApi.createImage(username, resourceFileName, context)
-                        val resourceResponse = apiService.getImage(username, resourceFileName)
-                        if (resourceResponse.isSuccessful) {
-                            withContext(Dispatchers.IO) {
-                                FileOutputStream(resourceFile).use { stream ->
-                                    stream.write(resourceResponse.body()!!.bytes())
-                                }
-                            }
-                        } else {
-                            Log.d("RemoteFileApi", "Fail to download resource file")
-                        }
+        try {
+            val fileResponse = apiService.getBlocks(username, fileName)
+            if (fileResponse.isSuccessful) {
+                val blocksBody = fileResponse.body()!!
+                val noteFile = LocalNoteFileApi.createNote(username, fileName, context)
+                withContext(Dispatchers.IO) {
+                    FileOutputStream(noteFile).use { stream ->
+                        stream.write(blocksBody.bytes())
                     }
-
-                    BlockType.AUDIO -> {
-                        val resourceFile =
-                            LocalNoteFileApi.createAudio(username, resourceFileName, context)
-                        val resourceResponse = apiService.getAudio(username, resourceFileName)
-                        if (resourceResponse.isSuccessful) {
-                            withContext(Dispatchers.IO) {
-                                FileOutputStream(resourceFile).use { stream ->
-                                    stream.write(resourceResponse.body()!!.bytes())
-                                }
-                            }
-                        } else {
-                            Log.d("RemoteFileApi", "Fail to download resource file")
-                        }
-                    }
-
-                    else -> {}
                 }
-            }
+
+                //            资源文件
+                val note = LocalNoteFileApi.loadNote(username, fileName, context)
+                val noteTitle = note.title
+                val noteBody = note.body
+                for (block in noteBody) {
+                    val resourceFileName = block.data
+                    when (block.type) {
+                        BlockType.IMAGE -> {
+                            val resourceFile =
+                                LocalNoteFileApi.createImage(username, resourceFileName, context)
+                            val resourceResponse = apiService.getImage(username, resourceFileName)
+                            if (resourceResponse.isSuccessful) {
+                                withContext(Dispatchers.IO) {
+                                    FileOutputStream(resourceFile).use { stream ->
+                                        stream.write(resourceResponse.body()!!.bytes())
+                                    }
+                                }
+                            } else {
+                                Log.d("RemoteFileApi", "Fail to download resource file")
+                            }
+                        }
+
+                        BlockType.AUDIO -> {
+                            val resourceFile =
+                                LocalNoteFileApi.createAudio(username, resourceFileName, context)
+                            val resourceResponse = apiService.getAudio(username, resourceFileName)
+                            if (resourceResponse.isSuccessful) {
+                                withContext(Dispatchers.IO) {
+                                    FileOutputStream(resourceFile).use { stream ->
+                                        stream.write(resourceResponse.body()!!.bytes())
+                                    }
+                                }
+                            } else {
+                                Log.d("RemoteFileApi", "Fail to download resource file")
+                            }
+                        }
+
+                        else -> {}
+                    }
+                }
 
 //                在数据库中更新笔记信息
-            noteDao.insertNote(
-                NoteEntity(
-                    username = username,
-                    category = category,
-                    fileName = fileName,
+                noteDao.insertNote(
+                    NoteEntity(
+                        username = username,
+                        category = category,
+                        fileName = fileName,
+                    )
                 )
-            )
-            LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
-            noteDao.updateTitle(username, fileName, noteTitle)
-        } else {
-            val errorBody = fileResponse.errorBody()?.string()
-            val errorDetail = if (errorBody != null) {
-                Json.decodeFromString<ErrorResponse>(errorBody).error
+                LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
+                noteDao.updateTitle(username, fileName, noteTitle)
             } else {
-                "Unknown error"
-            }
+                val errorBody = fileResponse.errorBody()?.string()
+                val errorDetail = if (errorBody != null) {
+                    Json.decodeFromString<ErrorResponse>(errorBody).error
+                } else {
+                    "Unknown error"
+                }
 
-            Log.d("RemoteFileApi", errorDetail)
+                Log.d("RemoteFileApi", errorDetail)
+            }
+        } catch (e: Exception) {
+            Log.e("RemoteFileApi", e.message.toString())
         }
     }
 
