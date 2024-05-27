@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -121,6 +122,13 @@ fun EditorScreen(
         viewModel.loadNote(context)
         viewModel.loadLastModifiedTime()
         viewModel.initExoPlayer(context)
+    }
+
+    BackHandler {
+        coroutineScope.launch {
+            viewModel.saveNote(context)
+            navigateToHome()
+        }
     }
 
     Scaffold(
