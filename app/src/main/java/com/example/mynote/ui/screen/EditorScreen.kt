@@ -49,10 +49,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,7 +68,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -77,6 +81,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -227,7 +232,10 @@ fun EditorScreen(
                         BasicTextField(
                             value = viewModel.noteTitle,
                             onValueChange = { newTitle -> viewModel.noteTitle = newTitle },
-                            textStyle = TextStyle(fontSize = titleTextSize),
+                            textStyle = LocalTextStyle.current.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = titleTextSize,
+                            ),
                             decorationBox = { innerTextField ->
                                 if (viewModel.noteTitle.isEmpty()) {
                                     Text(
@@ -240,6 +248,7 @@ fun EditorScreen(
                                 }
                                 innerTextField()
                             },
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface)
                         )
                     }
                     item {
@@ -358,7 +367,8 @@ fun BodyBlock(
         BasicTextField(
             value = value,
             onValueChange = { onValueChanged(it) },
-            textStyle = TextStyle(
+            textStyle = LocalTextStyle.current.copy(
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = normalTextSize,
                 lineHeight = normalTextLineHeight,
             ),
@@ -368,6 +378,7 @@ fun BodyBlock(
             keyboardActions = KeyboardActions(
                 onNext = { onNext() }
             ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface),
             modifier = Modifier
                 .fillMaxWidth()
                 .onKeyEvent { onKeyEvent(it) }
@@ -495,7 +506,7 @@ fun AudioBlock(
     var expanded by remember {mutableStateOf(false)}
 
     Box(
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier = Modifier.padding(vertical = 8.dp)
     ) {
         Card(
             shape = RoundedCornerShape(8.dp),

@@ -31,7 +31,8 @@ object AppViewModelProvider {
         initializer {
             EditorViewModel(
                 myNoteApplication().container.noteDao,
-                myNoteApplication().container.myNoteApiService
+                myNoteApplication().container.myNoteApiService,
+                myNoteApplication().container.llmApiService,
             )
         }
 

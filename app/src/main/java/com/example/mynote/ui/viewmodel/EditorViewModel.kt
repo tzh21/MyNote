@@ -18,6 +18,7 @@ import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.RemoteFileApi
 import com.example.mynote.data.getCurrentTime
+import com.example.mynote.network.LLMApiService
 import com.example.mynote.network.MyNoteApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +28,8 @@ import kotlinx.coroutines.launch
 
 class EditorViewModel(
     val noteDao: NoteDao,
-    val apiService: MyNoteApiService
+    val serverApi: MyNoteApiService,
+    val llmApi: LLMApiService,
 ): ViewModel() {
     lateinit var username: String
     lateinit var category: String
@@ -189,7 +191,17 @@ class EditorViewModel(
     suspend fun uploadNote(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             saveNote(context)
-            RemoteFileApi.uploadNote(username, fileName, context, apiService)
+            RemoteFileApi.uploadNote(username, fileName, context, serverApi)
         }
     }
+
+//    suspend fun generateBrief(): String {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            var bodyString = ""
+//            for (block in noteBody) {
+//                bodyString += "${block.data} \n"
+//            }
+//
+//        }
+//    }
 }
