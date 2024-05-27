@@ -458,3 +458,22 @@ fun getCurrentTime(): String {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MMdd-HHmmss")
     return currentDateTime.format(formatter)
 }
+
+fun simplifyTime(inputTime: String): String {
+    if (inputTime.length != 16) {
+        return "未知"
+    }
+
+    val currentDateTime = LocalDateTime.now()
+    val formattedTime = DateTimeFormatter.ofPattern("yyyy-MMdd-HHmmss").format(currentDateTime)
+    if (inputTime.substring(0, 4) != formattedTime.substring(0, 4)) {
+        return inputTime.substring(0, 4) + " 年"
+    }
+    if (inputTime.substring(5, 9) != formattedTime.substring(5, 9)) {
+        return inputTime.substring(5, 7) + " 月 " + inputTime.substring(7, 9) + " 日"
+    }
+    if (inputTime.substring(10, 16) != formattedTime.substring(10, 16)) {
+        return inputTime.substring(10, 12) + ": " + inputTime.substring(12, 14)
+    }
+    return "未知"
+}

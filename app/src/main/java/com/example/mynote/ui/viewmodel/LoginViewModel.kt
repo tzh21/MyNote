@@ -11,7 +11,6 @@ import com.example.mynote.network.MyNoteApiService
 import com.example.mynote.network.SignupRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -22,13 +21,6 @@ enum class LoginStatus {
     INACTIVE
 }
 
-data class LoginState(
-    val username: String = "",
-    val password: String = "",
-    val status: LoginStatus = LoginStatus.INACTIVE,
-    val errorDetail: String = ""
-)
-
 class LoginViewModel(
     val apiService: MyNoteApiService
 ) : ViewModel() {
@@ -38,7 +30,7 @@ class LoginViewModel(
     var error by mutableStateOf("")
 
     suspend fun login() {
-//        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             loginStatus = LoginStatus.LOADING
             try {
                 val response = apiService.login(LoginRequest(username, password))
@@ -60,7 +52,7 @@ class LoginViewModel(
                 loginStatus = LoginStatus.ERROR
                 error = e.message ?: "unknown error"
             }
-//        }
+        }
     }
 
     suspend fun signup() {

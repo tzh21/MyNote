@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.example.mynote.data.NoteEntity
+import com.example.mynote.data.simplifyTime
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
@@ -364,7 +365,7 @@ fun HomeScreen(
                                                 fontSize = Typography.titleLarge.fontSize,
                                             )
                                             Text(
-                                                text = queryNoteList[index].lastModifiedTime,
+                                                text = "上次修改：${simplifyTime(queryNoteList[index].lastModifiedTime)}",
                                                 fontSize = Typography.bodyMedium.fontSize,
                                                 color = Color.Gray
                                             )
@@ -453,7 +454,7 @@ fun HomeScreen(
                                                 fontSize = Typography.titleLarge.fontSize,
                                             )
                                             Text(
-                                                text = noteList[index].lastModifiedTime,
+                                                text = "上次修改：${simplifyTime(noteList[index].lastModifiedTime)}",
                                                 fontSize = Typography.bodyMedium.fontSize,
                                                 color = Color.Gray
                                             )

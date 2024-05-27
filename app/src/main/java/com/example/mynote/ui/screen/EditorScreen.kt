@@ -85,6 +85,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
 import com.example.mynote.data.LocalNoteFileApi
+import com.example.mynote.data.simplifyTime
 import com.example.mynote.ui.component.TextFieldDialog
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
@@ -199,18 +200,6 @@ fun EditorScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                     }
                 )
-                Divider()
-//                Spacer(modifier = Modifier.height(16.dp))
-//                Row(
-//                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                ) {
-//                    ImagePicker { viewModel.insertImage(it, context) }
-//                    AudioPicker { viewModel.insertAudio(it, context) }
-//                    CameraButton { viewModel.insertImage(it, context) }
-//                    AudioRecorderButton { viewModel.insertAudio(it, context) }
-//                }
-//                Spacer(modifier = Modifier.height(16.dp))
-//                Divider()
             }
                  },
     ) { scaffoldPadding ->
@@ -260,7 +249,7 @@ fun EditorScreen(
                     item {
                         val lastModifiedTime by viewModel.lastModifiedTime.collectAsState()
                         Text(
-                            "最近修改时间：${lastModifiedTime.ifEmpty { "未知" }}",
+                            "上次修改：${simplifyTime(lastModifiedTime)}",
                             style = TextStyle(color = Color.LightGray),
                         )
                     }
@@ -362,15 +351,9 @@ fun BodyBlock(
     onNext: () -> Unit,
     onKeyEvent: (KeyEvent) -> Boolean,
     onFocusChanged: (FocusState) -> Unit,
-//    onImageSelected: (Uri) -> Unit,
-//    onAudioSelected: (Uri) -> Unit
 ) {
-//    var expanded by remember {
-//        mutableStateOf(false)
-//    }
     val normalTextSize = Typography.bodyMedium.fontSize
     val normalTextLineHeight = normalTextSize * 1.5f
-//    Box {
     Column {
         BasicTextField(
             value = value,
@@ -391,28 +374,8 @@ fun BodyBlock(
                 .padding(vertical = 8.dp)
                 .onFocusChanged {
                     onFocusChanged(it)
-//                    expanded = it.isFocused
                 }
-//                .pointerInput(Unit) {
-//                    detectTapGestures(onLongPress = { expanded = true })
-//                }
         )
-//        if (expanded) {
-//                Row {
-//                    CameraButton {
-//                        onImageSelected(it)
-//                    }
-//                    ImagePicker {
-//                        onImageSelected(it)
-//                    }
-//                    AudioRecorderButton {
-//                        onAudioSelected(it)
-//                    }
-//                    AudioPicker {
-//                        onAudioSelected(it)
-//                    }
-//                }
-//        }
     }
 }
 
