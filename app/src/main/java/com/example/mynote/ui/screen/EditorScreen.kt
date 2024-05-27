@@ -31,6 +31,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
@@ -54,7 +55,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,7 +68,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
@@ -81,7 +80,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -95,6 +93,7 @@ import com.example.mynote.ui.component.TextFieldDialog
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.EditorViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -193,12 +192,21 @@ fun EditorScreen(
                                 }
                             }
                         }
-                        IconButton(onClick = { coroutineScope.launch {
+                        IconButton(onClick = { coroutineScope.launch(Dispatchers.IO) {
                             viewModel.uploadNote(context)
                         }}) {
                             Icon(
                                 imageVector = Icons.Default.CloudUpload,
                                 contentDescription = "Upload",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(onClick = { coroutineScope.launch(Dispatchers.IO) {
+                            viewModel.summary = viewModel.generateSummary()
+                        }}) {
+                            Icon(
+                                imageVector = Icons.Default.Chat,
+                                contentDescription = "Summarize your note",
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -263,6 +271,15 @@ fun EditorScreen(
                         )
                     }
                     item { Spacer(modifier = Modifier.height(16.dp)) }
+                    if (viewModel.summary.isNotEmpty()) {
+                        item {
+                            Text(
+                                "摘要：${viewModel.summary}",
+                                style = TextStyle(color = Color.Gray),
+                            )
+                        }
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
+                    }
 //                    笔记正文
                     items(viewModel.noteBody.size) { index ->
                         val blockData = viewModel.noteBody[index].data
@@ -290,8 +307,6 @@ fun EditorScreen(
                                             }
                                         }
                                     },
-//                                    onImageSelected = { viewModel.insertImage(it, context) },
-//                                    onAudioSelected = { viewModel.insertAudio(it, context) }
                                 )
                             }
                             BlockType.IMAGE -> {

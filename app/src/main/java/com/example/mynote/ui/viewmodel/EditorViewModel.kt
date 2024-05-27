@@ -2,6 +2,7 @@ package com.example.mynote.ui.viewmodel
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,8 +19,12 @@ import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.RemoteFileApi
 import com.example.mynote.data.getCurrentTime
+import com.example.mynote.network.ChatRequest
 import com.example.mynote.network.LLMApiService
+import com.example.mynote.network.Message
 import com.example.mynote.network.MyNoteApiService
+import com.example.mynote.network.prompt
+import com.example.mynote.network.systemPrompt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -53,15 +58,6 @@ class EditorViewModel(
                 .filterNotNull()
                 .first()
         }
-    }
-
-//    将标题和正文合并为一个字符串，用于后续数据库检索
-    fun getBodyString(): String {
-        var bodyString = ""
-        for (block in noteBody) {
-            bodyString += "${block.data} \n"
-        }
-        return bodyString
     }
 
     suspend fun saveNote(context: Context) {
@@ -195,13 +191,40 @@ class EditorViewModel(
         }
     }
 
-//    suspend fun generateBrief(): String {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            var bodyString = ""
-//            for (block in noteBody) {
-//                bodyString += "${block.data} \n"
-//            }
-//
-//        }
-//    }
+    var summary by mutableStateOf("")
+
+    suspend fun generateSummary(): String {
+        try {
+            var bodyString = ""
+            for (block in noteBody) {
+                bodyString += "${block.data} \n"
+            }
+            val request = ChatRequest(
+                model = "moonshot-v1-8k",
+                messages = listOf(
+                    systemPrompt,
+                    Message("user", prompt + bodyString)
+                ),
+                temperature = 0.3f
+            )
+            val response = llmApi.chat(request)
+            if (response.isSuccessful) {
+                val completion = response.body()?.choices?.get(0)?.message?.content
+                if (completion != null) {
+                    return completion
+                } else {
+                    throw Exception("cannot find message content in response")
+                }
+            } else {
+                val errorBody = response.errorBody()?.string()
+                if (errorBody != null) {
+                    Log.e("EditorViewModel", errorBody)
+                }
+                throw Exception("response is not successful")
+            }
+        } catch (e: Exception) {
+            Log.e("EditorViewModel", e.toString())
+        }
+        return "错误"
+    }
 }

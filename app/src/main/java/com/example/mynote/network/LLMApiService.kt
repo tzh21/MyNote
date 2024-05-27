@@ -30,7 +30,7 @@ interface LLMApiService {
         "Authorization: Bearer $MOONSHOT_API_KEY" // 将 YOUR_API_KEY 替换为实际的 API 密钥
     )
     @POST("v1/chat/completions")
-    suspend fun chatCompletions(@Body request: ChatRequest): Response<ChatResponse>
+    suspend fun chat(@Body request: ChatRequest): Response<ChatResponse>
 }
 
 @Serializable
@@ -39,11 +39,18 @@ data class Message(
     val content: String
 )
 
+val systemPrompt = Message(
+    role = "system",
+    content = "你是 Kimi，由 Moonshot AI 提供的人工智能助手，你更擅长中文和英文的对话。你会为用户提供安全，有帮助，准确的回答。同时，你会拒绝一切涉及恐怖主义，种族歧视，黄色暴力等问题的回答。Moonshot AI 为专有名词，不可翻译成其他语言。"
+)
+
+const val prompt = "请为下面的文字生成一段摘要："
+
 @Serializable
 data class ChatRequest(
-    val model: String = "moonshot-v1-8k",
+    val model: String,
     val messages: List<Message>,
-    val temperature: Float = 0.3f
+    val temperature: Float
 )
 
 @Serializable
