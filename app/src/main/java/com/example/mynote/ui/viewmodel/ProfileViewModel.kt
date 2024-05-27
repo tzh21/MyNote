@@ -13,6 +13,7 @@ import com.example.mynote.data.NoteDao
 import com.example.mynote.data.ProfileEntity
 import com.example.mynote.data.RemoteFileApi
 import com.example.mynote.data.getCurrentTime
+import com.example.mynote.network.ChangePasswordRequest
 import com.example.mynote.network.MottoRequest
 import com.example.mynote.network.MyNoteApiService
 import com.example.mynote.network.NicknameRequest
@@ -26,10 +27,6 @@ class ProfileViewModel(
     val apiService: MyNoteApiService,
 ): ViewModel() {
     var isSyncing by mutableStateOf(false)
-
-    companion object {
-        private const val TIMEOUT_MILLIS = 50_000L
-    }
 
     var profileStateFlow = MutableStateFlow<ProfileEntity>(ProfileEntity())
 
@@ -102,6 +99,15 @@ class ProfileViewModel(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    var isChangingPassword by mutableStateOf(false)
+    suspend fun changePassword(
+        newPassword: String
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            apiService.changePassword(username, ChangePasswordRequest(newPassword))
         }
     }
 }

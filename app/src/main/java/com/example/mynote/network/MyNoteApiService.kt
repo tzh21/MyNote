@@ -1,17 +1,13 @@
 package com.example.mynote.network
 
 import kotlinx.serialization.Serializable
-import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.Part
 import retrofit2.http.Path
-import retrofit2.http.Streaming
 
 interface MyNoteApiService {
     @POST("login")
@@ -58,6 +54,9 @@ interface MyNoteApiService {
 
     @GET("profile/{username}")
     suspend fun getProfile(@Path("username") username: String): Response<ProfileResponse>
+
+    @POST("password/{username}")
+    suspend fun changePassword(@Path("username") username: String, @Body password: ChangePasswordRequest): Response<ResponseBody>
 }
 
 @Serializable
@@ -107,4 +106,9 @@ data class ProfileResponse(
     val motto: String,
     val nickname: String,
     val avatar: String
+)
+
+@Serializable
+data class ChangePasswordRequest(
+    val password: String
 )

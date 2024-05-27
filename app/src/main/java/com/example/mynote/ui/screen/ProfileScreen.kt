@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.provider.MediaStore
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -200,7 +199,7 @@ fun ProfileScreen(
             Divider(thickness = 1.dp)
             Spacer(modifier = Modifier.height(32.dp))
             MaxWidthButton(
-                onClick = { },
+                onClick = { viewModel.isChangingPassword = true },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 text = "修改密码"
             )
@@ -257,6 +256,27 @@ fun ProfileScreen(
                 text = { Text(text = "正在同步数据，请稍候") },
                 onDismissRequest = { },
                 confirmButton = { }
+            )
+        }
+
+        if (viewModel.isChangingPassword) {
+            var newPassword by rememberSaveable {
+                mutableStateOf("")
+            }
+            TextFieldDialog(
+                title = "修改密码",
+                text = {
+                    TextField(
+                        value = newPassword,
+                        onValueChange = { newValue -> newPassword = newValue }
+                    )},
+                onConfirmClick = {
+                    coroutineScope.launch {
+                        viewModel.changePassword(newPassword)
+                        viewModel.isChangingPassword = false
+                    }
+                },
+                onDismissRequest = { viewModel.isChangingPassword = false }
             )
         }
     }
