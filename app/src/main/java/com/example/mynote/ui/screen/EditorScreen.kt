@@ -63,6 +63,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -136,6 +137,10 @@ fun EditorScreen(
         }
     }
 
+    var isChatting by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     Scaffold(
         topBar = {
             Column {
@@ -202,9 +207,13 @@ fun EditorScreen(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
-                        IconButton(onClick = { coroutineScope.launch(Dispatchers.IO) {
-                            viewModel.noteSummary = viewModel.generateSummary()
-                        }}) {
+                        IconButton(onClick = {
+                            isChatting = true
+                            coroutineScope.launch(Dispatchers.IO) {
+                                viewModel.noteSummary = viewModel.generateSummary()
+                                isChatting = false
+                            }
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Chat,
                                 contentDescription = "Summarize your note",
@@ -272,7 +281,15 @@ fun EditorScreen(
                         )
                     }
                     item { Spacer(modifier = Modifier.height(16.dp)) }
-                    if (viewModel.noteSummary.isNotEmpty()) {
+                    if (isChatting) {
+                        item {
+                            Text(
+                                "正在生成摘要...",
+                                style = TextStyle(color = Color.Gray),
+                            )
+                        }
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
+                    } else {
                         item {
                             Text(
                                 viewModel.noteSummary,
