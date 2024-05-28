@@ -27,7 +27,7 @@ enum class BlockType {
 
 data class Block(
     val type: BlockType,
-    val data: String
+    var data: String
 )
 
 data class Note(

@@ -193,8 +193,6 @@ class EditorViewModel(
         }
     }
 
-//    var summary by mutableStateOf("")
-
     suspend fun generateSummary(): String {
         try {
             var bodyString = ""

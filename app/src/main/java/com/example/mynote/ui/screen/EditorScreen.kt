@@ -289,12 +289,22 @@ fun EditorScreen(
                             )
                         }
                         item { Spacer(modifier = Modifier.height(16.dp)) }
-                    } else {
+                    } else if (viewModel.noteSummary.isNotEmpty()) {
                         item {
-                            Text(
-                                viewModel.noteSummary,
-                                style = TextStyle(color = Color.Gray),
-                            )
+                            var expanded by remember { mutableStateOf(false) }
+                            Box {
+                                Text(
+                                    viewModel.noteSummary,
+                                    style = TextStyle(color = Color.Gray),
+                                    modifier = Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { expanded = true }) }
+                                )
+                                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                    DropdownMenuItem(
+                                        text = { Text(text = "删除") },
+                                        onClick = { viewModel.noteSummary = "" }
+                                    )
+                                }
+                            }
                         }
                         item { Spacer(modifier = Modifier.height(16.dp)) }
                     }
@@ -422,6 +432,43 @@ fun BodyBlock(
         )
     }
 }
+
+//@Composable
+//fun BodyBlock(
+//    value: String,
+//    onValueChanged: (String) -> Unit,
+//    onNext: () -> Unit,
+//    onKeyEvent: (KeyEvent) -> Boolean,
+//    onFocusChanged: (FocusState) -> Unit,
+//) {
+//    val normalTextSize = Typography.titleMedium.fontSize
+//    val normalTextLineHeight = normalTextSize * 1.5f
+//    Column {
+//        BasicTextField(
+//            value = value,
+//            onValueChange = { onValueChanged(it) },
+//            textStyle = LocalTextStyle.current.copy(
+//                color = MaterialTheme.colorScheme.onSurface,
+//                fontSize = normalTextSize,
+//                lineHeight = normalTextLineHeight,
+//            ),
+//            keyboardOptions = KeyboardOptions.Default.copy(
+//                imeAction = ImeAction.Next
+//            ),
+//            keyboardActions = KeyboardActions(
+//                onNext = { onNext() }
+//            ),
+//            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface),
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .onKeyEvent { onKeyEvent(it) }
+//                .padding(vertical = 8.dp)
+//                .onFocusChanged {
+//                    onFocusChanged(it)
+//                }
+//        )
+//    }
+//}
 
 @Composable
 fun ImageBlock(
