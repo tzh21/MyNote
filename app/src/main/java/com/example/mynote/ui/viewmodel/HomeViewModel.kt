@@ -35,7 +35,6 @@ class HomeViewModel(
         val fileName = getCurrentTime()
 //        文件系统中创建文件
         val note = Note(
-            title = "",
             body = listOf(Block(type = BlockType.BODY, data = ""))
         )
         LocalNoteFileApi.saveNote(username, fileName, note, context)

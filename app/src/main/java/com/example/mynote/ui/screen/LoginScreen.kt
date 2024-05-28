@@ -1,6 +1,5 @@
 package com.example.mynote.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -117,6 +116,7 @@ fun LoginScreen(
                     .widthIn(max = 1000.dp)
                     .padding(horizontal = 32.dp)
             ) {
+                Spacer(modifier = Modifier.height(56.dp))
                 OutlinedTextField(
                     value = viewModel.username,
                     onValueChange = { viewModel.username = it },
@@ -165,7 +165,11 @@ fun LoginScreen(
                 if (Config.isDebug) {
                     MaxWidthButton(
                         onClick = { viewModel.defaultLogin() },
-                        text = "默认用户登录"
+                        text = "默认用户登录",
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
                 }
 

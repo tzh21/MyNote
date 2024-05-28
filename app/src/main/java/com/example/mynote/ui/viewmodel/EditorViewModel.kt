@@ -44,11 +44,13 @@ class EditorViewModel(
 
     var noteTitle by mutableStateOf("")
     var noteBody = mutableStateListOf<Block>()
+    var noteSummary by mutableStateOf("")
     fun loadNote(context: Context) {
         val note = LocalNoteFileApi.loadNote(username, fileName, context)
         noteTitle = note.title
         noteBody.clear()
         noteBody.addAll(note.body)
+        noteSummary = note.summary
     }
 
     var lastModifiedTime = MutableStateFlow<String>("")
@@ -63,7 +65,7 @@ class EditorViewModel(
     suspend fun saveNote(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
     //        本地保存文件
-            val note = Note(title = noteTitle, body = noteBody)
+            val note = Note(title = noteTitle, body = noteBody, summary = noteSummary)
             LocalNoteFileApi.saveNote(username, fileName, note, context)
     //        数据库中保存文件
             LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
@@ -191,7 +193,7 @@ class EditorViewModel(
         }
     }
 
-    var summary by mutableStateOf("")
+//    var summary by mutableStateOf("")
 
     suspend fun generateSummary(): String {
         try {

@@ -31,7 +31,8 @@ data class Block(
 )
 
 data class Note(
-    val title: String,
+    val title: String = "",
+    val summary: String = "",
     val body: List<Block>
 )
 

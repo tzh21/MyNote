@@ -200,7 +200,10 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(32.dp))
             MaxWidthButton(
                 onClick = { viewModel.isChangingPassword = true },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.secondary
+                ),
                 text = "修改密码"
             )
             Spacer(modifier = Modifier.height(8.dp))

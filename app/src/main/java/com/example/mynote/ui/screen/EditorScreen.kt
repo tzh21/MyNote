@@ -159,7 +159,7 @@ fun EditorScreen(
                     actions = {
                         Box {
                             var categoriesExpanded by remember { mutableStateOf(false) }
-                            Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            Row {
                                 AssistChip(
                                     onClick = { categoriesExpanded = true },
                                     label = { Text(text = viewModel.category) },
@@ -192,6 +192,7 @@ fun EditorScreen(
                                 }
                             }
                         }
+                        Spacer(modifier = Modifier.width(16.dp))
                         IconButton(onClick = { coroutineScope.launch(Dispatchers.IO) {
                             viewModel.uploadNote(context)
                         }}) {
@@ -202,7 +203,7 @@ fun EditorScreen(
                             )
                         }
                         IconButton(onClick = { coroutineScope.launch(Dispatchers.IO) {
-                            viewModel.summary = viewModel.generateSummary()
+                            viewModel.noteSummary = viewModel.generateSummary()
                         }}) {
                             Icon(
                                 imageVector = Icons.Default.Chat,
@@ -271,10 +272,10 @@ fun EditorScreen(
                         )
                     }
                     item { Spacer(modifier = Modifier.height(16.dp)) }
-                    if (viewModel.summary.isNotEmpty()) {
+                    if (viewModel.noteSummary.isNotEmpty()) {
                         item {
                             Text(
-                                "摘要：${viewModel.summary}",
+                                viewModel.noteSummary,
                                 style = TextStyle(color = Color.Gray),
                             )
                         }
@@ -376,7 +377,7 @@ fun BodyBlock(
     onKeyEvent: (KeyEvent) -> Boolean,
     onFocusChanged: (FocusState) -> Unit,
 ) {
-    val normalTextSize = Typography.bodyMedium.fontSize
+    val normalTextSize = Typography.titleMedium.fontSize
     val normalTextLineHeight = normalTextSize * 1.5f
     Column {
         BasicTextField(
@@ -419,13 +420,11 @@ fun ImageBlock(
     var expanded by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier = Modifier.padding(vertical = 8.dp)
     ) {
         Card(
             shape = RoundedCornerShape(8.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-            modifier = Modifier
-
         ) {
             Image(
                 bitmap = bitmap,
