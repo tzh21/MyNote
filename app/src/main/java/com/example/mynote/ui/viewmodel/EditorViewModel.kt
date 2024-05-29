@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -43,13 +44,17 @@ class EditorViewModel(
     var currentBlockIndex by mutableStateOf(0)
 
     var noteTitle by mutableStateOf("")
-    var noteBody = mutableStateListOf<Block>()
+    var noteBody = mutableStateListOf<BlockInValue>()
+//    var noteBody = mutableStateListOf<Block>()
+//    var TextFieldValueBody = mutableStateListOf<TextFieldValue>()
     var noteSummary by mutableStateOf("")
     fun loadNote(context: Context) {
         val note = LocalNoteFileApi.loadNote(username, fileName, context)
         noteTitle = note.title
         noteBody.clear()
-        noteBody.addAll(note.body)
+        for (block in note.body) {
+            noteBody.add(BlockInValue(block.type, TextFieldValue(block.data)))
+        }
         noteSummary = note.summary
     }
 
@@ -64,8 +69,9 @@ class EditorViewModel(
 
     suspend fun saveNote(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
+            val noteBodyInBlock = noteBody.map { Block(it.type, it.value.text) }
     //        本地保存文件
-            val note = Note(title = noteTitle, body = noteBody, summary = noteSummary)
+            val note = Note(title = noteTitle, body = noteBodyInBlock, summary = noteSummary)
             LocalNoteFileApi.saveNote(username, fileName, note, context)
     //        数据库中保存文件
             LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
@@ -124,16 +130,16 @@ class EditorViewModel(
 
         var insertIndex = currentBlockIndex + 1
 //        当前文本块为空时，插入图片到当前文本块
-        if (noteBody[currentBlockIndex].type == BlockType.BODY && noteBody[currentBlockIndex].data.isEmpty()) {
+        if (noteBody[currentBlockIndex].type == BlockType.BODY && noteBody[currentBlockIndex].value.text.isEmpty()) {
             insertIndex = currentBlockIndex
-            noteBody[insertIndex] = Block(type, fileName)
+            noteBody[insertIndex] = BlockInValue(type, TextFieldValue(fileName))
         }
         else {
-            noteBody.add(insertIndex, Block(type, fileName))
+            noteBody.add(insertIndex, BlockInValue(type, TextFieldValue(fileName)))
         }
 
 //        在末尾插入空文本块
-        noteBody.add(insertIndex + 1, Block(BlockType.BODY, ""))
+        noteBody.add(insertIndex + 1, BlockInValue(BlockType.BODY, TextFieldValue("")))
     }
 
     fun insertImage(uri: Uri, context: Context) {
@@ -197,7 +203,7 @@ class EditorViewModel(
         try {
             var bodyString = ""
             for (block in noteBody) {
-                bodyString += "${block.data} \n"
+                bodyString += "${block.value.text} \n"
             }
             val request = ChatRequest(
                 model = "moonshot-v1-8k",
@@ -228,3 +234,8 @@ class EditorViewModel(
         return "错误"
     }
 }
+
+data class BlockInValue(
+    val type: BlockType,
+    var value: TextFieldValue
+)

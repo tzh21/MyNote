@@ -80,19 +80,21 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
 import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.data.simplifyTime
 import com.example.mynote.ui.component.TextFieldDialog
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
+import com.example.mynote.ui.viewmodel.BlockInValue
 import com.example.mynote.ui.viewmodel.EditorViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -310,18 +312,31 @@ fun EditorScreen(
                     }
 //                    笔记正文
                     items(viewModel.noteBody.size) { index ->
-                        val blockData = viewModel.noteBody[index].data
-                        when(viewModel.noteBody[index].type) {
+                        val blockType = viewModel.noteBody[index].type
+                        val blockTextValue = viewModel.noteBody[index].value
+                        when(blockType) {
                             BlockType.BODY -> {
                                 BodyBlock(
-                                    value = blockData,
-                                    onValueChanged = { newText -> viewModel.noteBody[index] = viewModel.noteBody[index].copy(data = newText) },
+                                    value = blockTextValue,
+                                    onValueChanged = { newTextFieldValue ->
+                                        Log.d("focus", newTextFieldValue.text)
+                                        viewModel.noteBody[index] = BlockInValue(BlockType.BODY, newTextFieldValue)
+                                                     },
                                     onNext = {
-                                        viewModel.noteBody.add(index + 1, Block(BlockType.BODY, ""))
+                                        val currentCursor = viewModel.noteBody[index].value.selection.start
+                                        val beforeText = blockTextValue.text.substring(0, currentCursor)
+                                        val afterText = blockTextValue.text.substring(currentCursor)
+                                        viewModel.noteBody[index] = BlockInValue(BlockType.BODY, TextFieldValue(beforeText))
+                                        viewModel.noteBody.add(index + 1, BlockInValue(BlockType.BODY, TextFieldValue(afterText)))
                                         focusManager.moveFocus(FocusDirection.Down)
                                     },
                                     onKeyEvent = { keyEvent ->
-                                        if (keyEvent.key == Key.Backspace && blockData.isEmpty() && viewModel.noteBody.size > 1) {
+                                        if (keyEvent.key == Key.Backspace && blockTextValue.selection.start == 0 && viewModel.noteBody.size > 1) {
+                                            val length = viewModel.noteBody[index - 1].value.text.length
+                                            viewModel.noteBody[index - 1] = BlockInValue(BlockType.BODY, TextFieldValue(
+                                                text = viewModel.noteBody[index - 1].value.text + blockTextValue.text,
+                                                selection = TextRange(length)
+                                            ))
                                             viewModel.noteBody.removeAt(index)
                                             focusManager.moveFocus(FocusDirection.Up)
                                         }
@@ -331,7 +346,7 @@ fun EditorScreen(
                                         if (focusState.isFocused) {
                                             viewModel.currentBlockIndex = index
                                             if (index == viewModel.noteBody.size - 1) {
-                                                viewModel.noteBody.add(Block(BlockType.BODY, ""))
+                                                viewModel.noteBody.add(BlockInValue(BlockType.BODY, TextFieldValue("")))
                                             }
                                         }
                                     },
@@ -340,22 +355,22 @@ fun EditorScreen(
                             BlockType.IMAGE -> {
                                 ImageBlock(
                                     username = viewModel.username,
-                                    fileName = blockData,
+                                    fileName = blockTextValue.text,
                                     context = context,
                                     removeBlock = {
                                         viewModel.noteBody.removeAt(index)
-                                        viewModel.deleteImage(blockData, context)
+                                        viewModel.deleteImage(blockTextValue.text, context)
                                     }
                                 )
                             }
                             BlockType.AUDIO -> {
-                                val uri = LocalNoteFileApi.loadAudio(username, blockData, context).toUri()
+                                val uri = LocalNoteFileApi.loadAudio(username, blockTextValue.text, context).toUri()
                                 val isPlaying = (viewModel.isPlaying && viewModel.currentAudioUri == uri)
                                 AudioBlock(
                                     isPlaying = isPlaying,
                                     removeBlock = {
                                         viewModel.noteBody.removeAt(index)
-                                        viewModel.deleteAudio(blockData, context)
+                                        viewModel.deleteAudio(blockTextValue.text, context)
                                     },
                                     playAudio = {viewModel.playOrPauseAudio(uri)}
                                 )
@@ -398,8 +413,8 @@ fun EditorScreen(
 
 @Composable
 fun BodyBlock(
-    value: String,
-    onValueChanged: (String) -> Unit,
+    value: TextFieldValue,
+    onValueChanged: (TextFieldValue) -> Unit,
     onNext: () -> Unit,
     onKeyEvent: (KeyEvent) -> Boolean,
     onFocusChanged: (FocusState) -> Unit,
