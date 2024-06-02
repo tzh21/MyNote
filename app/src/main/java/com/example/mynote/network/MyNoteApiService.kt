@@ -41,6 +41,9 @@ interface MyNoteApiService {
     @DELETE("note/{username}/{fileName}")
     suspend fun deleteNote(@Path("username") username: String, @Path("fileName") fileName: String): Response<ResponseBody>
 
+    @DELETE("note/{username}")
+    suspend fun deleteAllNotes(@Path("username") username: String): Response<ResponseBody>
+
     @POST("motto/{username}")
     suspend fun postMotto(@Path("username") username: String, @Body motto: MottoRequest): Response<ResponseBody>
 

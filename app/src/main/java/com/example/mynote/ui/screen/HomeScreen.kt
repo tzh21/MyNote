@@ -25,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
@@ -137,7 +136,25 @@ fun HomeScreen(
                     }
                 },
                 actions = {
-//                        云同步
+//                        前往分类界面
+                    IconButton(onClick = { navigateToCategory() }) {
+                        Icon(
+                            imageVector = Icons.Default.Folder,
+                            contentDescription = "Category",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+//                        多选
+//                    IconButton(onClick = { }) {
+//                        Icon(
+//                            imageVector = Icons.Default.CheckCircleOutline,
+//                            contentDescription = "Multiselect",
+//                            tint = MaterialTheme.colorScheme.primary
+//                        )
+//                    }
+
+//                    云同步
                     Box {
                         val expandedSyncMenu = remember {mutableStateOf(false)}
 
@@ -175,35 +192,41 @@ fun HomeScreen(
                         }
                     }
 
-//                        前往分类界面
-                    IconButton(onClick = { navigateToCategory() }) {
-                        Icon(
-                            imageVector = Icons.Default.Folder,
-                            contentDescription = "Category",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    Box {
+                        var deleteExpanded by remember { mutableStateOf(false) }
+                        IconButton(onClick = {
+                            deleteExpanded = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
 
-//                        多选
-                    IconButton(onClick = { }) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircleOutline,
-                            contentDescription = "Multiselect",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    IconButton(onClick = {
-                        showDeleteDialog = true
-//                        coroutineScope.launch(Dispatchers.IO) {
-//                            viewModel.deleteAllNotes(context)
-//                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete",
-                            tint = MaterialTheme.colorScheme.error
-                        )
+                        DropdownMenu(
+                            expanded = deleteExpanded,
+                            onDismissRequest = { deleteExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(text = "在本地删除全部笔记") },
+                                onClick = {
+                                    deleteExpanded = false
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        viewModel.deleteAllNotes(context)
+                                    }
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = "在本地和云端删除全部笔记") },
+                                onClick = {
+                                    deleteExpanded = false
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        viewModel.deleteAllNotes(context)
+                                        viewModel.deleteRemoteAllNotes()
+                                    }
+                                })
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(16.dp))

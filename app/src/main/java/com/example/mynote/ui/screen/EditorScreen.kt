@@ -32,7 +32,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
@@ -210,26 +209,7 @@ fun EditorScreen(
                             }
                         }
                         Spacer(modifier = Modifier.width(16.dp))
-                        IconButton(onClick = { coroutineScope.launch(Dispatchers.IO) {
-                            viewModel.uploadNote(context)
-                        }}) {
-                            Icon(
-                                imageVector = Icons.Default.CloudUpload,
-                                contentDescription = "Upload",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        IconButton(onClick = {
-                            coroutineScope.launch(Dispatchers.IO) {
-                                viewModel.deleteRemoteNote()
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.CloudOff,
-                                contentDescription = "Delete",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
+
                         IconButton(onClick = {
                             isChatting = true
                             coroutineScope.launch(Dispatchers.IO) {
@@ -243,13 +223,56 @@ fun EditorScreen(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
-                        IconButton(onClick = { showDeleteDialog = true }) {
+
+                        IconButton(onClick = { coroutineScope.launch(Dispatchers.IO) {
+                            viewModel.uploadNote(context)
+                        }}) {
                             Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete current note",
-                                tint = MaterialTheme.colorScheme.error
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Upload",
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
+
+                        Box {
+                            var deleteExpanded by remember {
+                                mutableStateOf(false)
+                            }
+
+                            IconButton(onClick = { deleteExpanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = deleteExpanded,
+                                onDismissRequest = { deleteExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(text = "仅在本地删除") },
+                                    onClick = {
+                                        navigateToHome()
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            viewModel.deleteNote(context)
+                                        }
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(text = "在本地和云端删除") },
+                                    onClick = {
+                                        navigateToHome()
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            viewModel.deleteNote(context)
+                                            viewModel.deleteRemoteNote()
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.width(16.dp))
                     }
                 )

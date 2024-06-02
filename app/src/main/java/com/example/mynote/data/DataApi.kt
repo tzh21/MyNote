@@ -448,6 +448,16 @@ object RemoteFileApi {
             Log.e("RemoteFileApi", e.message.toString())
         }
     }
+
+    suspend fun deleteAllNotes(
+        username: String, apiService: MyNoteApiService
+    ) {
+        try {
+            apiService.deleteAllNotes(username)
+        } catch (e: Exception) {
+            Log.e("RemoteFileApi", e.message.toString())
+        }
+    }
 }
 
 fun getCurrentTime(): String {

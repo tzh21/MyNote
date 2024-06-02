@@ -78,6 +78,10 @@ class HomeViewModel(
         LocalNoteFileApi.clearDir("$noteBase/${username}/audio", context)
     }
 
+    suspend fun deleteRemoteAllNotes() {
+        RemoteFileApi.deleteAllNotes(username, apiService)
+    }
+
     var queryText by mutableStateOf("")
     val queryResultsStateFlow = MutableStateFlow<List<NoteEntity>>(emptyList())
     var isQueryFocused by mutableStateOf(false)
