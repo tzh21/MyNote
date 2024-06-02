@@ -69,17 +69,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.NoteEntity
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.data.simplifyTime
-import com.example.mynote.ui.component.MinimalDialog
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
