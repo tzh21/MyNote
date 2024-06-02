@@ -2,6 +2,8 @@ package com.example.mynote.ui.screen
 
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
+import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -67,7 +69,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.example.mynote.data.NoteEntity
 import com.example.mynote.data.simplifyTime
 import com.example.mynote.ui.theme.Typography
@@ -87,7 +88,7 @@ data object HomeRoute {
 //nfs:
 //HomeScreen 直接从上级接收的 List<NoteEntity>，不再从 ViewModel 中获取，这样可以避免重复加载
 //相应地，HomeScreen 需要从上级接收修改笔记列表的函数，以便在增加或删除笔记时更新列表
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     navigateToCategory: () -> Unit,
@@ -414,6 +415,7 @@ fun HomeScreen(
                             Box {
                                 Card(
                                     onClick = {
+                                        Log.d("focus", "${noteList[index].title} ${noteList[index].fileName}")
                                         navigateToEditor(noteList[index].fileName)
                                               },
                                     shape = RoundedCornerShape(8.dp),
@@ -468,7 +470,7 @@ fun HomeScreen(
                                     DropdownMenuItem(
                                         text = { Text("删除") },
                                         onClick = {
-                                            coroutineScope.launch {
+                                            coroutineScope.launch(Dispatchers.IO) {
                                                 viewModel.deleteNote(noteList[index].fileName, context)
                                             }
                                         }

@@ -9,7 +9,6 @@ import com.example.mynote.network.ErrorResponse
 import com.example.mynote.network.LoginRequest
 import com.example.mynote.network.MyNoteApiService
 import com.example.mynote.network.SignupRequest
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -30,53 +29,61 @@ class LoginViewModel(
     var error by mutableStateOf("")
 
     suspend fun login() {
-        viewModelScope.launch(Dispatchers.IO) {
-            loginStatus = LoginStatus.LOADING
-            try {
-                val response = apiService.login(LoginRequest(username, password))
-                if (response.isSuccessful) {
-                    loginStatus = LoginStatus.SUCCESS
-                }
-                else {
-                    val errorBody = response.errorBody()?.string()
-                    val errorDetail = if (errorBody != null) {
-                        Json.decodeFromString<ErrorResponse>(errorBody).error
-                    } else {
-                        "unknown error"
-                    }
-
-                    loginStatus = LoginStatus.ERROR
-                    error = errorDetail
-                }
-            } catch (e: Exception) {
+        loginStatus = LoginStatus.LOADING
+        try {
+            if (username == "" || password == "") {
                 loginStatus = LoginStatus.ERROR
-                error = e.message ?: "unknown error"
+                error = "用户名和密码不能为空"
+                return
             }
+
+            val response = apiService.login(LoginRequest(username, password))
+            if (response.isSuccessful) {
+                loginStatus = LoginStatus.SUCCESS
+            }
+            else {
+                val errorBody = response.errorBody()?.string()
+                val errorDetail = if (errorBody != null) {
+                    Json.decodeFromString<ErrorResponse>(errorBody).error
+                } else {
+                    "unknown error"
+                }
+
+                loginStatus = LoginStatus.ERROR
+                error = errorDetail
+            }
+        } catch (e: Exception) {
+            loginStatus = LoginStatus.ERROR
+            error = e.message ?: "unknown error"
         }
     }
 
     suspend fun signup() {
-        viewModelScope.launch(Dispatchers.IO) {
-            loginStatus = LoginStatus.LOADING
-            try {
-                val response = apiService.signup(SignupRequest(username, password))
-                if (response.isSuccessful) {
-                    loginStatus = LoginStatus.SUCCESS
-                }
-                else {
-                    val errorBody = response.errorBody()?.string()
-                    val errorDetail = if (errorBody != null) {
-                        Json.decodeFromString<ErrorResponse>(errorBody).error
-                    } else {
-                        "unknown error"
-                    }
-
-                    loginStatus = LoginStatus.ERROR
-                    error = errorDetail
-                }
-            } catch (e: Exception) {
+        loginStatus = LoginStatus.LOADING
+        try {
+            if (username == "" || password == "") {
                 loginStatus = LoginStatus.ERROR
+                error = "用户名和密码不能为空"
+                return
             }
+
+            val response = apiService.signup(SignupRequest(username, password))
+            if (response.isSuccessful) {
+                loginStatus = LoginStatus.SUCCESS
+            }
+            else {
+                val errorBody = response.errorBody()?.string()
+                val errorDetail = if (errorBody != null) {
+                    Json.decodeFromString<ErrorResponse>(errorBody).error
+                } else {
+                    "unknown error"
+                }
+
+                loginStatus = LoginStatus.ERROR
+                error = errorDetail
+            }
+        } catch (e: Exception) {
+            loginStatus = LoginStatus.ERROR
         }
     }
 

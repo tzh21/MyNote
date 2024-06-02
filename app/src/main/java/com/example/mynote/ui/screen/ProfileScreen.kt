@@ -91,17 +91,20 @@ fun ProfileScreen(
             MediumTopAppBar(
                 title = { Text(text = "用户信息") },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navigateToHome()
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "Home",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }},
+                    Row {
+                        Spacer(modifier = Modifier.width(16.dp))
+                        IconButton(
+                            onClick = {
+                                navigateToHome()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Home",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }}
+                    },
                 actions = {
                     IconButton(onClick = {
                         coroutineScope.launch {
@@ -114,6 +117,7 @@ fun ProfileScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
+                    Spacer(modifier = Modifier.width(16.dp))
                 }
             )
         }

@@ -1,25 +1,19 @@
 package com.example.mynote.ui.screen
 
 import android.content.res.Configuration
-import android.util.Log
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,10 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.mynote.data.LocalNoteFileApi
 import com.example.mynote.ui.component.MaxWidthButton
 import com.example.mynote.ui.component.TextFieldDialog
 import com.example.mynote.ui.theme.Typography
@@ -77,15 +69,17 @@ fun CategoryScreen(
             MediumTopAppBar(
                 title = { Text(text = "分类", modifier = Modifier.padding(start = 16.dp)) },
                 navigationIcon = {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = { navigateToHome(currentCategory) },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "Back to home",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    Row {
+                        Spacer(modifier = Modifier.width(16.dp))
+                        IconButton(
+                            onClick = { navigateToHome(currentCategory) },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Back to home",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -97,7 +91,7 @@ fun CategoryScreen(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
                     }
                 }
             )

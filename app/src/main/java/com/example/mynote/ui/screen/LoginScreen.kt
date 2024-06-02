@@ -45,7 +45,7 @@ import kotlinx.coroutines.launch
 
 const val LoginRoute = "login"
 const val SuccessMessage = "登录成功"
-fun errorMessage(detail: String) = "登录失败: \n$detail"
+fun errorMessage(detail: String) = "登录或注册失败: \n$detail"
 const val LoadingMessage = "登录中..."
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,10 +56,10 @@ fun LoginScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackBarHostState = remember { SnackbarHostState() }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) {
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) {
             when(viewModel.loginStatus) {
                 LoginStatus.SUCCESS -> {
                     Snackbar(
@@ -149,7 +149,7 @@ fun LoginScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     MaxWidthButton(
-                        onClick = { coroutineScope.launch { viewModel.signup() } },
+                        onClick = { coroutineScope.launch(Dispatchers.IO) { viewModel.signup() } },
                         modifier = Modifier
                             .weight(1f),
                         text = "注册",
@@ -180,13 +180,14 @@ fun LoginScreen(
                 LaunchedEffect(viewModel.loginStatus) {
                     when(viewModel.loginStatus) {
                         LoginStatus.SUCCESS -> {
-                            snackbarHostState.showSnackbar(SuccessMessage)
+                            snackBarHostState.showSnackbar(SuccessMessage)
                         }
                         LoginStatus.ERROR -> {
-                            snackbarHostState.showSnackbar(errorMessage(viewModel.error))
+                            snackBarHostState.showSnackbar(errorMessage(viewModel.error))
+                            viewModel.loginStatus = LoginStatus.INACTIVE
                         }
                         LoginStatus.LOADING -> {
-                            snackbarHostState.showSnackbar(LoadingMessage)
+                            snackBarHostState.showSnackbar(LoadingMessage)
                         }
                         else -> {}
                     }

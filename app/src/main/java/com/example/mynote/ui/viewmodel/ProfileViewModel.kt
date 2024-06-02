@@ -2,7 +2,6 @@ package com.example.mynote.ui.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -85,7 +84,6 @@ class ProfileViewModel(
                 val response = apiService.getProfile(username)
                 if (response.isSuccessful) {
                     val responseBody = response.body()
-                    Log.d("focus", "downloadProfile: ${responseBody.toString()}")
                     if (responseBody != null) {
 //                        获取头像图片并更新数据库
                         RemoteFileApi.updateProfile(

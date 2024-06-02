@@ -319,7 +319,6 @@ fun EditorScreen(
                                 BodyBlock(
                                     value = blockTextValue,
                                     onValueChanged = { newTextFieldValue ->
-                                        Log.d("focus", newTextFieldValue.text)
                                         viewModel.noteBody[index] = BlockInValue(BlockType.BODY, newTextFieldValue)
                                                      },
                                     onNext = {

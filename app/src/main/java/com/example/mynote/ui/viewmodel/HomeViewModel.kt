@@ -62,12 +62,10 @@ class HomeViewModel(
 
 //    删除笔记
     suspend fun deleteNote(fileName: String, context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
 //            数据库
-            noteDao.deleteNote(username, category, fileName)
+        noteDao.deleteNote(username, category, fileName)
 //            文件系统
-            LocalNoteFileApi.deleteNote(username, fileName, context)
-        }
+        LocalNoteFileApi.deleteNote(username, fileName, context)
     }
 
 //    删除当前分类下的所有笔记
