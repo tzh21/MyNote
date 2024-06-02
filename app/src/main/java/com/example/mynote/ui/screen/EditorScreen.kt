@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayCircleOutline
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -54,6 +55,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -70,6 +72,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.Key
@@ -140,6 +143,10 @@ fun EditorScreen(
     }
 
     var isChatting by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var showDeleteDialog by rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -220,6 +227,13 @@ fun EditorScreen(
                                 imageVector = Icons.Default.Chat,
                                 contentDescription = "Summarize your note",
                                 tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete current note",
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                         Spacer(modifier = Modifier.width(16.dp))
@@ -407,6 +421,35 @@ fun EditorScreen(
                 }
             )
         }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                shape = RectangleShape,
+                title = { Text(text = "删除笔记") },
+                text = { Text(text = "确定要删除这篇笔记吗？") },
+                onDismissRequest = { showDeleteDialog = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+                            navigateToHome()
+                            coroutineScope.launch(Dispatchers.IO) {
+                                viewModel.deleteNote(context)
+                            }
+                        }
+                    ) {
+                        Text(text = "确定")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteDialog = false }
+                    ) {
+                        Text(text = "取消")
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -446,43 +489,6 @@ fun BodyBlock(
         )
     }
 }
-
-//@Composable
-//fun BodyBlock(
-//    value: String,
-//    onValueChanged: (String) -> Unit,
-//    onNext: () -> Unit,
-//    onKeyEvent: (KeyEvent) -> Boolean,
-//    onFocusChanged: (FocusState) -> Unit,
-//) {
-//    val normalTextSize = Typography.titleMedium.fontSize
-//    val normalTextLineHeight = normalTextSize * 1.5f
-//    Column {
-//        BasicTextField(
-//            value = value,
-//            onValueChange = { onValueChanged(it) },
-//            textStyle = LocalTextStyle.current.copy(
-//                color = MaterialTheme.colorScheme.onSurface,
-//                fontSize = normalTextSize,
-//                lineHeight = normalTextLineHeight,
-//            ),
-//            keyboardOptions = KeyboardOptions.Default.copy(
-//                imeAction = ImeAction.Next
-//            ),
-//            keyboardActions = KeyboardActions(
-//                onNext = { onNext() }
-//            ),
-//            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface),
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .onKeyEvent { onKeyEvent(it) }
-//                .padding(vertical = 8.dp)
-//                .onFocusChanged {
-//                    onFocusChanged(it)
-//                }
-//        )
-//    }
-//}
 
 @Composable
 fun ImageBlock(

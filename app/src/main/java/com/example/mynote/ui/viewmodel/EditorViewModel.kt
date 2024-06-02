@@ -172,6 +172,13 @@ class EditorViewModel(
         deleteResource(fileName, BlockType.AUDIO, context)
     }
 
+    suspend fun deleteNote(context: Context) {
+//            数据库
+        noteDao.deleteNote(username, category, fileName)
+//            文件系统
+        LocalNoteFileApi.deleteNote(username, fileName, context)
+    }
+
     lateinit var player: ExoPlayer
 
     fun initExoPlayer(context: Context) {if (!::player.isInitialized) {player = ExoPlayer.Builder(context).build()}}

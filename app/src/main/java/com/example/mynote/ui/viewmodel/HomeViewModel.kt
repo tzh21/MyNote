@@ -70,14 +70,12 @@ class HomeViewModel(
 
 //    删除当前分类下的所有笔记
     suspend fun deleteAllNotes(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            //        从数据库中删除所有笔记
-            noteDao.deleteAllNotes(username)
-            //        从文件系统中删除所有笔记和依赖文件
-            LocalNoteFileApi.clearDir("$noteBase/${username}/blocks", context)
-            LocalNoteFileApi.clearDir("$noteBase/${username}/image", context)
-            LocalNoteFileApi.clearDir("$noteBase/${username}/audio", context)
-        }
+//        从数据库中删除所有笔记
+        noteDao.deleteAllNotes(username)
+//        从文件系统中删除所有笔记和依赖文件
+        LocalNoteFileApi.clearDir("$noteBase/${username}/blocks", context)
+        LocalNoteFileApi.clearDir("$noteBase/${username}/image", context)
+        LocalNoteFileApi.clearDir("$noteBase/${username}/audio", context)
     }
 
     var queryText by mutableStateOf("")

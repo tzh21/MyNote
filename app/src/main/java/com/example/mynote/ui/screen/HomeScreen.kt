@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -45,17 +46,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -107,6 +111,10 @@ fun HomeScreen(
     viewModel.username = username
     viewModel.category = category
 
+    var showDeleteDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     Scaffold(
         topBar = {
             MediumTopAppBar(
@@ -128,42 +136,42 @@ fun HomeScreen(
                 },
                 actions = {
 //                        云同步
-                        Box {
-                            val expandedSyncMenu = remember {mutableStateOf(false)}
+                    Box {
+                        val expandedSyncMenu = remember {mutableStateOf(false)}
 
-                            IconButton(onClick = {
-                                expandedSyncMenu.value = true
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Cloud,
-                                    contentDescription = "Cloud sync",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = expandedSyncMenu.value,
-                                onDismissRequest = { expandedSyncMenu.value = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(text = "上传全部笔记") },
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            viewModel.uploadAll(context)
-                                        }
-                                    }
-                                )
-
-                                DropdownMenuItem(
-                                    text = { Text(text = "下载全部笔记") },
-                                    onClick = {
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            viewModel.downloadAll(context)
-                                        }
-                                    }
-                                )
-                            }
+                        IconButton(onClick = {
+                            expandedSyncMenu.value = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Cloud,
+                                contentDescription = "Cloud sync",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
+
+                        DropdownMenu(
+                            expanded = expandedSyncMenu.value,
+                            onDismissRequest = { expandedSyncMenu.value = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(text = "上传全部笔记") },
+                                onClick = {
+                                    coroutineScope.launch {
+                                        viewModel.uploadAll(context)
+                                    }
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = { Text(text = "下载全部笔记") },
+                                onClick = {
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        viewModel.downloadAll(context)
+                                    }
+                                }
+                            )
+                        }
+                    }
 
 //                        前往分类界面
                     IconButton(onClick = { navigateToCategory() }) {
@@ -184,9 +192,10 @@ fun HomeScreen(
                     }
 
                     IconButton(onClick = {
-                        coroutineScope.launch {
-                            viewModel.deleteAllNotes(context)
-                        }
+                        showDeleteDialog = true
+//                        coroutineScope.launch(Dispatchers.IO) {
+//                            viewModel.deleteAllNotes(context)
+//                        }
                     }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -481,6 +490,34 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                shape = RectangleShape,
+                title = { Text(text = "删除全部笔记") },
+                text = { Text(text = "确定要删除全部笔记吗？") },
+                onDismissRequest = { showDeleteDialog = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+                            coroutineScope.launch(Dispatchers.IO) {
+                                viewModel.deleteAllNotes(context)
+                            }
+                        }
+                    ) {
+                        Text(text = "确定")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteDialog = false }
+                    ) {
+                        Text(text = "取消")
+                    }
+                }
+            )
         }
     }
 }
