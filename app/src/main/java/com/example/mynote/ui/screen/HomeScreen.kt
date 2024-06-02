@@ -53,7 +53,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -73,8 +72,10 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.NoteEntity
+import com.example.mynote.data.getCurrentTime
 import com.example.mynote.data.simplifyTime
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
@@ -107,7 +108,6 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     viewModel.username = username
     viewModel.category = category
@@ -175,7 +175,7 @@ fun HomeScreen(
                             DropdownMenuItem(
                                 text = { Text(text = "上传全部笔记") },
                                 onClick = {
-                                    coroutineScope.launch {
+                                    viewModel.viewModelScope.launch(Dispatchers.IO) {
                                         viewModel.uploadAll(context)
                                     }
                                 }
@@ -184,7 +184,7 @@ fun HomeScreen(
                             DropdownMenuItem(
                                 text = { Text(text = "下载全部笔记") },
                                 onClick = {
-                                    coroutineScope.launch(Dispatchers.IO) {
+                                    viewModel.viewModelScope.launch(Dispatchers.IO) {
                                         viewModel.downloadAll(context)
                                     }
                                 }
@@ -212,7 +212,7 @@ fun HomeScreen(
                                 text = { Text(text = "在本地删除全部笔记") },
                                 onClick = {
                                     deleteExpanded = false
-                                    coroutineScope.launch(Dispatchers.IO) {
+                                    viewModel.viewModelScope.launch(Dispatchers.IO) {
                                         viewModel.deleteAllNotes(context)
                                     }
                                 }
@@ -221,7 +221,7 @@ fun HomeScreen(
                                 text = { Text(text = "在本地和云端删除全部笔记") },
                                 onClick = {
                                     deleteExpanded = false
-                                    coroutineScope.launch(Dispatchers.IO) {
+                                    viewModel.viewModelScope.launch(Dispatchers.IO) {
                                         viewModel.deleteAllNotes(context)
                                         viewModel.deleteRemoteAllNotes()
                                     }
@@ -237,10 +237,8 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = {
 //                    这里采用创建时间作为文件名（这种设计要求两次创建间隔超过 1s）
-                    coroutineScope.launch {
-                        val noteFileName = viewModel.createNote(context)
-                        navigateToEditor(noteFileName)
-                    }
+                    val noteFileName = getCurrentTime()
+                    navigateToEditor(noteFileName)
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 32.dp, end = 16.dp)
@@ -504,7 +502,7 @@ fun HomeScreen(
                                     DropdownMenuItem(
                                         text = { Text("删除") },
                                         onClick = {
-                                            coroutineScope.launch(Dispatchers.IO) {
+                                            viewModel.viewModelScope.launch(Dispatchers.IO) {
                                                 viewModel.deleteNote(noteList[index].fileName, context)
                                             }
                                         }
@@ -532,7 +530,7 @@ fun HomeScreen(
                     TextButton(
                         onClick = {
                             showDeleteDialog = false
-                            coroutineScope.launch(Dispatchers.IO) {
+                            viewModel.viewModelScope.launch(Dispatchers.IO) {
                                 viewModel.deleteAllNotes(context)
                             }
                         },

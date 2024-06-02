@@ -67,15 +67,13 @@ class EditorViewModel(
     }
 
     suspend fun saveNote(context: Context) {
-//        viewModelScope.launch(Dispatchers.IO) {
-            val noteBodyInBlock = noteBody.map { Block(it.type, it.value.text) }
-    //        本地保存文件
-            val note = Note(title = noteTitle, body = noteBodyInBlock, summary = noteSummary)
-            LocalNoteFileApi.saveNote(username, fileName, note, context)
-    //        数据库中保存文件
-            LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
-            noteDao.updateCategoryLastUsedTime(username, category, getCurrentTime())
-//        }
+        val noteBodyInBlock = noteBody.map { Block(it.type, it.value.text) }
+//        本地保存文件
+        val note = Note(title = noteTitle, body = noteBodyInBlock, summary = noteSummary)
+        LocalNoteFileApi.saveNote(username, fileName, note, context)
+//        数据库中保存文件
+        LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
+        noteDao.updateCategoryLastUsedTime(username, category, getCurrentTime())
     }
 
     var categoryList = MutableStateFlow<List<String>>(emptyList())

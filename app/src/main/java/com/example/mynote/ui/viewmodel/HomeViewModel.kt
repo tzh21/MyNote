@@ -6,15 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mynote.data.Block
-import com.example.mynote.data.BlockType
-import com.example.mynote.data.CategoryEntity
 import com.example.mynote.data.LocalNoteFileApi
-import com.example.mynote.data.Note
 import com.example.mynote.data.NoteDao
 import com.example.mynote.data.NoteEntity
 import com.example.mynote.data.RemoteFileApi
-import com.example.mynote.data.getCurrentTime
 import com.example.mynote.data.noteBase
 import com.example.mynote.network.MyNoteApiService
 import kotlinx.coroutines.Dispatchers
@@ -31,34 +26,34 @@ class HomeViewModel(
     var category = ""
 
 //    在当前分类下创建一个笔记
-    suspend fun createNote(context: Context): String {
-        val fileName = getCurrentTime()
-//        文件系统中创建文件
-        val note = Note(
-            body = listOf(Block(type = BlockType.BODY, data = ""))
-        )
-        LocalNoteFileApi.saveNote(username, fileName, note, context)
-//        数据库中确认创建分类
-        noteDao.insertCategory(CategoryEntity(
-            id = 0,
-            username = username,
-            category = category,
-            lastUsedTime = fileName
-        ))
-//        数据库中更新笔记信息
-        noteDao.insertNote(NoteEntity(
-            id = 0,
-            username = username,
-            category = category,
-            fileName = fileName,
-            title = "",
-            keyword = "",
-            coverImage = "",
-            lastModifiedTime = fileName
-        ))
-
-        return fileName
-    }
+//    suspend fun createNote(context: Context): String {
+//        val fileName = getCurrentTime()
+////        文件系统中创建文件
+//        val note = Note(
+//            body = listOf(Block(type = BlockType.BODY, data = ""))
+//        )
+//        LocalNoteFileApi.saveNote(username, fileName, note, context)
+////        数据库中确认创建分类
+//        noteDao.insertCategory(CategoryEntity(
+//            id = 0,
+//            username = username,
+//            category = category,
+//            lastUsedTime = fileName
+//        ))
+////        数据库中更新笔记信息
+//        noteDao.insertNote(NoteEntity(
+//            id = 0,
+//            username = username,
+//            category = category,
+//            fileName = fileName,
+//            title = "",
+//            keyword = "",
+//            coverImage = "",
+//            lastModifiedTime = fileName
+//        ))
+//
+//        return fileName
+//    }
 
 //    删除笔记
     suspend fun deleteNote(fileName: String, context: Context) {
@@ -116,15 +111,13 @@ class HomeViewModel(
     suspend fun uploadAll(context: Context) {
 //        从数据库中获取所有笔记的列表
 //        逐个上传
-        viewModelScope.launch(Dispatchers.IO) {
-            val noteList = noteDao.getAllNotes(username)
-            for (note in noteList) {
-                viewModelScope.launch(Dispatchers.IO) {
-                    RemoteFileApi.uploadNote(
-                        username, note.fileName, context,
-                        apiService
-                    )
-                }
+        val noteList = noteDao.getAllNotes(username)
+        for (note in noteList) {
+            viewModelScope.launch(Dispatchers.IO) {
+                RemoteFileApi.uploadNote(
+                    username, note.fileName, context,
+                    apiService
+                )
             }
         }
     }

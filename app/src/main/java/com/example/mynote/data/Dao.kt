@@ -41,7 +41,7 @@ interface NoteDao {
     """)
     fun filterNotes(username: String, queryText: String): Flow<List<NoteEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertNote(note: NoteEntity)
 
     @Update

@@ -212,19 +212,25 @@ object LocalNoteFileApi {
         deleteFile("${audioBase(username)}/$fileName", context)
     }
 
+//    更新数据库中笔记的信息
     suspend fun digestNoteEntity(
         username: String, fileName: String,
         category: String, note: Note, noteDao: NoteDao
     ) {
-//    更新数据库中笔记的信息
 //    val title: String = "",
 //    val keyword: String = "", // 正文的第一段
 //    val coverImage: String = "", // 封面图片
 //    val lastModifiedTime: String = ""
+//        更新前确保条目存在
+        noteDao.insertNote(NoteEntity(
+            username = username,
+            category = category,
+            fileName = fileName
+        ))
 
         val noteTitle = note.title
-        val noteBody = note.body
 
+        val noteBody = note.body
         var bodyString = ""
         for (block in noteBody) {
             bodyString += "${block.data} \n"
@@ -238,24 +244,29 @@ object LocalNoteFileApi {
             }
         }
 
+        val lastModifiedTime = getCurrentTime()
+
         noteDao.updateNoteInfo(
-            username, fileName,
-            category, noteTitle, bodyString,
-            coverImage, getCurrentTime()
+            username, fileName, category,
+            noteTitle, bodyString, coverImage, lastModifiedTime
         )
     }
 
     fun loadNote(username: String, fileName: String, context: Context): Note {
         val filePath = "${blockBase(username)}/$fileName"
         val file = loadFile(filePath, context)
-        var note: Note? = null
+//        var note: Note? = null
+        var note = Note(
+            title = "",
+            body = listOf(Block(type = BlockType.BODY, data = ""))
+        )
 
         if (file.exists()) {
             val content = file.readText()
             note = Gson().fromJson(content, Note::class.java)
         }
 
-        return note!!
+        return note
     }
 }
 
@@ -328,9 +339,8 @@ object RemoteFileApi {
                     }
                 }
 
-                //            资源文件
+//                资源文件
                 val note = LocalNoteFileApi.loadNote(username, fileName, context)
-                val noteTitle = note.title
                 val noteBody = note.body
                 for (block in noteBody) {
                     val resourceFileName = block.data
@@ -378,7 +388,6 @@ object RemoteFileApi {
                     )
                 )
                 LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
-                noteDao.updateTitle(username, fileName, noteTitle)
             } else {
                 val errorBody = fileResponse.errorBody()?.string()
                 val errorDetail = if (errorBody != null) {
