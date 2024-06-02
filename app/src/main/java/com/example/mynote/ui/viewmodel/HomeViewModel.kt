@@ -14,6 +14,7 @@ import com.example.mynote.data.noteBase
 import com.example.mynote.network.MyNoteApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -93,17 +94,21 @@ class HomeViewModel(
         return LocalNoteFileApi.loadImage(username, fileName, context)
     }
 
-    suspend fun downloadAll(context: Context) {
-        val listResponse = apiService.list(username)
-        if (listResponse.isSuccessful) {
-            val fileNameList = listResponse.body()!!.files
-            for (fileName in fileNameList) {
-                viewModelScope.launch(Dispatchers.IO) {
-                    RemoteFileApi.downloadNote(
-                        username, fileName, category, context,
-                        apiService, noteDao
-                    )
+    fun downloadAll(context: Context, onFinished: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val listResponse = apiService.list(username)
+            if (listResponse.isSuccessful) {
+                val fileNameList = listResponse.body()!!.files
+                val jobs = fileNameList.map { fileName ->
+                    launch {
+                        RemoteFileApi.downloadNote(
+                            username, fileName, category, context,
+                            apiService, noteDao
+                        )
+                    }
                 }
+                jobs.joinAll()
+                onFinished()
             }
         }
     }

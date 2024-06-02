@@ -107,9 +107,11 @@ fun ProfileScreen(
                     },
                 actions = {
                     IconButton(onClick = {
-                        coroutineScope.launch {
-                            viewModel.downloadProfile(context)
-                        }
+                        viewModel.isSyncing = true
+                        viewModel.downloadProfile(
+                            {viewModel.isSyncing = false},
+                            context
+                        )
                     }) {
                         Icon(
                             imageVector = Icons.Default.CloudDownload,

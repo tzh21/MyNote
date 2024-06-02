@@ -27,7 +27,7 @@ class ProfileViewModel(
 ): ViewModel() {
     var isSyncing by mutableStateOf(false)
 
-    var profileStateFlow = MutableStateFlow<ProfileEntity>(ProfileEntity())
+    var profileStateFlow = MutableStateFlow(ProfileEntity())
 
     var username = ""
 
@@ -76,7 +76,8 @@ class ProfileViewModel(
         }
     }
 
-    suspend fun downloadProfile(
+    fun downloadProfile(
+        onFinished: () -> Unit,
         context: Context
     ) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -89,14 +90,12 @@ class ProfileViewModel(
                         RemoteFileApi.updateProfile(
                             username, responseBody, context, apiService, noteDao
                         )
-
-//                        noteDao.insertProfile(ProfileEntity(username = username))
-//                        noteDao.updateProfile(username, responseBody.motto, responseBody.nickname, responseBody.avatar)
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+            onFinished()
         }
     }
 

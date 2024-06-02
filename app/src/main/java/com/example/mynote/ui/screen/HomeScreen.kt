@@ -69,14 +69,17 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.NoteEntity
 import com.example.mynote.data.getCurrentTime
 import com.example.mynote.data.simplifyTime
+import com.example.mynote.ui.component.MinimalDialog
 import com.example.mynote.ui.theme.Typography
 import com.example.mynote.ui.viewmodel.AppViewModelProvider
 import com.example.mynote.ui.viewmodel.HomeViewModel
@@ -113,6 +116,10 @@ fun HomeScreen(
     viewModel.category = category
 
     var showDeleteDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var showDownloadingDialog by rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -184,9 +191,10 @@ fun HomeScreen(
                             DropdownMenuItem(
                                 text = { Text(text = "下载全部笔记") },
                                 onClick = {
-                                    viewModel.viewModelScope.launch(Dispatchers.IO) {
-                                        viewModel.downloadAll(context)
-                                    }
+                                    showDownloadingDialog = true
+                                    viewModel.downloadAll(context, onFinished = {
+                                        showDownloadingDialog = false
+                                    })
                                 }
                             )
                         }
@@ -548,6 +556,16 @@ fun HomeScreen(
                         Text(text = "取消")
                     }
                 }
+            )
+        }
+
+        if (showDownloadingDialog) {
+            AlertDialog(
+                shape = RectangleShape,
+                title = { Text(text = "下载笔记") },
+                text = { Text(text = "正在下载笔记") },
+                onDismissRequest = {},
+                confirmButton = {}
             )
         }
     }
