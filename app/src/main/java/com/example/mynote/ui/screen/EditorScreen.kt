@@ -32,6 +32,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
@@ -216,6 +217,17 @@ fun EditorScreen(
                                 imageVector = Icons.Default.CloudUpload,
                                 contentDescription = "Upload",
                                 tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(onClick = {
+                            coroutineScope.launch(Dispatchers.IO) {
+                                viewModel.deleteRemoteNote()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.CloudOff,
+                                contentDescription = "Delete",
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                         IconButton(onClick = {

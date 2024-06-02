@@ -178,6 +178,10 @@ class EditorViewModel(
         LocalNoteFileApi.deleteNote(username, fileName, context)
     }
 
+    suspend fun deleteRemoteNote() {
+        RemoteFileApi.deleteNote(username, fileName, serverApi)
+    }
+
     lateinit var player: ExoPlayer
 
     var isPlaying by mutableStateOf(false)

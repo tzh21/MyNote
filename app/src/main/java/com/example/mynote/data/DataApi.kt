@@ -212,15 +212,16 @@ object LocalNoteFileApi {
         deleteFile("${audioBase(username)}/$fileName", context)
     }
 
+    suspend fun digestNoteEntity(
+        username: String, fileName: String,
+        category: String, note: Note, noteDao: NoteDao
+    ) {
 //    更新数据库中笔记的信息
 //    val title: String = "",
 //    val keyword: String = "", // 正文的第一段
 //    val coverImage: String = "", // 封面图片
 //    val lastModifiedTime: String = ""
-    suspend fun digestNoteEntity(
-        username: String, fileName: String,
-        category: String, note: Note, noteDao: NoteDao
-    ) {
+
         val noteTitle = note.title
         val noteBody = note.body
 
@@ -257,22 +258,6 @@ object LocalNoteFileApi {
         return note!!
     }
 }
-
-//object NoteLoaderApi {
-//    //    返回 Note 格式的笔记
-//    fun loadNote(username: String, fileName: String, context: Context): Note {
-//        val filePath = "${blockBase(username)}/$fileName"
-//        val file = LocalNoteFileApi.loadFile(filePath, context)
-//        var note: Note? = null
-//
-//        if (file.exists()) {
-//            val content = file.readText()
-//            note = Gson().fromJson(content, Note::class.java)
-//        }
-//
-//        return note!!
-//    }
-//}
 
 //远程笔记文件相关操作
 //和服务器通信中使用的 path 是相对路径，不包含 noteBase 和 filesDir
@@ -452,6 +437,17 @@ object RemoteFileApi {
             profileResponseBody.avatar
         )
     }
+
+    suspend fun deleteNote(
+        username: String, fileName: String,
+        apiService: MyNoteApiService
+    ) {
+        try {
+            apiService.deleteNote(username, fileName)
+        } catch (e: Exception) {
+            Log.e("RemoteFileApi", e.message.toString())
+        }
+    }
 }
 
 fun getCurrentTime(): String {
@@ -474,7 +470,7 @@ fun simplifyTime(inputTime: String): String {
         return inputTime.substring(5, 7) + " 月 " + inputTime.substring(7, 9) + " 日"
     }
     if (inputTime.substring(10, 16) != formattedTime.substring(10, 16)) {
-        return inputTime.substring(10, 12) + ": " + inputTime.substring(12, 14)
+        return inputTime.substring(10, 12) + ":" + inputTime.substring(12, 14)
     }
     return "未知"
 }

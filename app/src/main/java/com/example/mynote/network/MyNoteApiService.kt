@@ -5,6 +5,7 @@ import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -36,6 +37,9 @@ interface MyNoteApiService {
 
     @POST("audio/{username}/{fileName}")
     suspend fun uploadAudio(@Path("username") username: String, @Path("fileName") fileName: String, @Body audio: RequestBody): Response<ResponseBody>
+
+    @DELETE("note/{username}/{fileName}")
+    suspend fun deleteNote(@Path("username") username: String, @Path("fileName") fileName: String): Response<ResponseBody>
 
     @POST("motto/{username}")
     suspend fun postMotto(@Path("username") username: String, @Body motto: MottoRequest): Response<ResponseBody>
