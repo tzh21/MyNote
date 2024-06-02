@@ -32,7 +32,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -494,6 +496,11 @@ fun HomeScreen(
 
         if (showDeleteDialog) {
             AlertDialog(
+                icon = { Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Warning",
+                    tint = MaterialTheme.colorScheme.error
+                )},
                 shape = RectangleShape,
                 title = { Text(text = "删除全部笔记") },
                 text = { Text(text = "确定要删除全部笔记吗？") },
@@ -505,7 +512,10 @@ fun HomeScreen(
                             coroutineScope.launch(Dispatchers.IO) {
                                 viewModel.deleteAllNotes(context)
                             }
-                        }
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
                     ) {
                         Text(text = "确定")
                     }

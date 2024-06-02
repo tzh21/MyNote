@@ -40,9 +40,11 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayCircleOutline
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -424,7 +426,11 @@ fun EditorScreen(
 
         if (showDeleteDialog) {
             AlertDialog(
-                shape = RectangleShape,
+                icon = { Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Warning",
+                    tint = MaterialTheme.colorScheme.error
+                )},                shape = RectangleShape,
                 title = { Text(text = "删除笔记") },
                 text = { Text(text = "确定要删除这篇笔记吗？") },
                 onDismissRequest = { showDeleteDialog = false },
@@ -436,7 +442,10 @@ fun EditorScreen(
                             coroutineScope.launch(Dispatchers.IO) {
                                 viewModel.deleteNote(context)
                             }
-                        }
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
                     ) {
                         Text(text = "确定")
                     }
