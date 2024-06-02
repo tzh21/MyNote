@@ -384,6 +384,10 @@ fun EditorScreen(
                                 AudioBlock(
                                     isPlaying = isPlaying,
                                     removeBlock = {
+//                                        停止播放
+                                        if (isPlaying) {
+                                            viewModel.playOrPauseAudio(uri)
+                                        }
                                         viewModel.noteBody.removeAt(index)
                                         viewModel.deleteAudio(blockTextValue.text, context)
                                     },

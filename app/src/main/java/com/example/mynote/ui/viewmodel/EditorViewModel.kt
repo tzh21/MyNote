@@ -11,6 +11,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.mynote.data.Block
 import com.example.mynote.data.BlockType
@@ -45,8 +46,6 @@ class EditorViewModel(
 
     var noteTitle by mutableStateOf("")
     var noteBody = mutableStateListOf<BlockInValue>()
-//    var noteBody = mutableStateListOf<Block>()
-//    var TextFieldValueBody = mutableStateListOf<TextFieldValue>()
     var noteSummary by mutableStateOf("")
     fun loadNote(context: Context) {
         val note = LocalNoteFileApi.loadNote(username, fileName, context)
@@ -58,7 +57,7 @@ class EditorViewModel(
         noteSummary = note.summary
     }
 
-    var lastModifiedTime = MutableStateFlow<String>("")
+    var lastModifiedTime = MutableStateFlow("")
     fun loadLastModifiedTime() {
         viewModelScope.launch(Dispatchers.IO) {
             lastModifiedTime.value = noteDao.getLastModifiedTime(username, fileName)
@@ -181,9 +180,21 @@ class EditorViewModel(
 
     lateinit var player: ExoPlayer
 
-    fun initExoPlayer(context: Context) {if (!::player.isInitialized) {player = ExoPlayer.Builder(context).build()}}
     var isPlaying by mutableStateOf(false)
     var currentAudioUri by mutableStateOf(Uri.EMPTY)
+    fun initExoPlayer(context: Context) {
+        if (!::player.isInitialized) {
+            player = ExoPlayer.Builder(context).build().also {
+                it.addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_ENDED) {
+                            isPlaying = false
+                        }
+                    }
+                })
+            }
+        }
+    }
     fun playOrPauseAudio(audioUri: Uri) {
         if (player.isPlaying && currentAudioUri == audioUri) {
             player.pause()
