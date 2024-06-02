@@ -92,6 +92,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mynote.data.BlockType
 import com.example.mynote.data.LocalNoteFileApi
@@ -124,7 +125,6 @@ fun EditorScreen(
     viewModel: EditorViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     viewModel.username = username
     viewModel.category = category
@@ -138,10 +138,10 @@ fun EditorScreen(
     }
 
     BackHandler {
-        coroutineScope.launch {
+        viewModel.viewModelScope.launch(Dispatchers.IO) {
             viewModel.saveNote(context)
-            navigateToHome()
         }
+        navigateToHome()
     }
 
     var isChatting by rememberSaveable {
@@ -160,10 +160,12 @@ fun EditorScreen(
                     navigationIcon = {
                         Row {
                             Spacer(modifier = Modifier.width(16.dp))
-                            IconButton(onClick = { coroutineScope.launch {
-                                viewModel.saveNote(context)
+                            IconButton(onClick = {
+                                viewModel.viewModelScope.launch(Dispatchers.IO) {
+                                    viewModel.saveNote(context)
+                                }
                                 navigateToHome()
-                            }}) {
+                            }) {
                                 Icon(
                                     imageVector = Icons.Filled.Home,
                                     contentDescription = "Back to home",
@@ -198,11 +200,9 @@ fun EditorScreen(
                                     DropdownMenuItem(
                                         text = { Text(categoryItem) },
                                         onClick = {
-                                            coroutineScope.launch {
-                                                categoriesExpanded = false
-                                                viewModel.moveNote(categoryItem, context)
-                                                navigateToEditor(categoryItem, viewModel.fileName)
-                                            }
+                                            categoriesExpanded = false
+                                            viewModel.moveNote(categoryItem, context)
+                                            navigateToEditor(categoryItem, viewModel.fileName)
                                         }
                                     )
                                 }
@@ -212,7 +212,7 @@ fun EditorScreen(
 
                         IconButton(onClick = {
                             isChatting = true
-                            coroutineScope.launch(Dispatchers.IO) {
+                            viewModel.viewModelScope.launch(Dispatchers.IO) {
                                 viewModel.noteSummary = viewModel.generateSummary()
                                 isChatting = false
                             }
@@ -224,7 +224,7 @@ fun EditorScreen(
                             )
                         }
 
-                        IconButton(onClick = { coroutineScope.launch(Dispatchers.IO) {
+                        IconButton(onClick = { viewModel.viewModelScope.launch(Dispatchers.IO) {
                             viewModel.uploadNote(context)
                         }}) {
                             Icon(
@@ -255,7 +255,7 @@ fun EditorScreen(
                                     text = { Text(text = "仅在本地删除") },
                                     onClick = {
                                         navigateToHome()
-                                        coroutineScope.launch(Dispatchers.IO) {
+                                        viewModel.viewModelScope.launch(Dispatchers.IO) {
                                             viewModel.deleteNote(context)
                                         }
                                     }
@@ -264,7 +264,7 @@ fun EditorScreen(
                                     text = { Text(text = "在本地和云端删除") },
                                     onClick = {
                                         navigateToHome()
-                                        coroutineScope.launch(Dispatchers.IO) {
+                                        viewModel.viewModelScope.launch(Dispatchers.IO) {
                                             viewModel.deleteNote(context)
                                             viewModel.deleteRemoteNote()
                                         }
@@ -478,7 +478,7 @@ fun EditorScreen(
                         onClick = {
                             showDeleteDialog = false
                             navigateToHome()
-                            coroutineScope.launch(Dispatchers.IO) {
+                            viewModel.viewModelScope.launch(Dispatchers.IO) {
                                 viewModel.deleteNote(context)
                             }
                         },

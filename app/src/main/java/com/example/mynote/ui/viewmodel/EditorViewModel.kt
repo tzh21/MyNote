@@ -67,7 +67,7 @@ class EditorViewModel(
     }
 
     suspend fun saveNote(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
+//        viewModelScope.launch(Dispatchers.IO) {
             val noteBodyInBlock = noteBody.map { Block(it.type, it.value.text) }
     //        本地保存文件
             val note = Note(title = noteTitle, body = noteBodyInBlock, summary = noteSummary)
@@ -75,7 +75,7 @@ class EditorViewModel(
     //        数据库中保存文件
             LocalNoteFileApi.digestNoteEntity(username, fileName, category, note, noteDao)
             noteDao.updateCategoryLastUsedTime(username, category, getCurrentTime())
-        }
+//        }
     }
 
     var categoryList = MutableStateFlow<List<String>>(emptyList())
@@ -96,7 +96,7 @@ class EditorViewModel(
     }
 
 //    改变笔记所在的分类
-    suspend fun moveNote(newCategory: String, context: Context) {
+    fun moveNote(newCategory: String, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             saveNote(context)
     //        无需移动文件
@@ -215,10 +215,8 @@ class EditorViewModel(
     }
 
     suspend fun uploadNote(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            saveNote(context)
-            RemoteFileApi.uploadNote(username, fileName, context, serverApi)
-        }
+        saveNote(context)
+        RemoteFileApi.uploadNote(username, fileName, context, serverApi)
     }
 
     suspend fun generateSummary(): String {
